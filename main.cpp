@@ -21,6 +21,10 @@
 #include <GLFW/glfw3.h> // GLFW helper library
 #include "stb_image.h" //Sean image loader from 09
 #include "bvec.h"
+#include "unit.h"
+#include "enemy.h"
+#include "player.h"
+#include "background.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -249,10 +253,8 @@ mat4 lookAtMouse(float *unit_pos) {
 
 	float unit_yaw = dir.x*90;
 	float unit_roll = -90+dir.y*90;
-	float unit_pitch = 0.0f;//dir.y*100 ;
+	float unit_pitch = 0.0f;//dir.y*100 
 
-
-	
 	//unit_pos[2] += cam_speed * elapsed_seconds; 
 	mat4 T = translate (identity_mat4 (), vec3 (unit_pos[0], unit_pos[1], unit_pos[2])); // unit translation
 
@@ -325,6 +327,9 @@ int main () {
 		0.0f, 0.0f, Sz, -1.0f,
 		0.0f, 0.0f, Pz, 0.0f
 	};
+
+	/* shader background */
+	background bg = background("background_vs.glsl", "background_fs.glsl");
 	
 	/* tex test */
 	int tex_location = glGetUniformLocation (shader_programme, "basic_texture");
@@ -338,8 +343,6 @@ int main () {
 	assert (load_texture("AudioEquipment0039_2_S.jpg", &monkey_tex));
 	glBindTexture (GL_TEXTURE_2D, monkey_tex);
 
-
-		
 	float cam_speed = 25.0f; // 1 unit per second
 	float cam_yaw_speed = 33.0f; // 10 degrees per second
 	float cam_pos[] = {0.0f, 0.0f, 100.0f}; // don't start at zero, or we will be too close
@@ -350,33 +353,40 @@ int main () {
 
 	//vec3 view_dir = view_mat * cam_pos;
 
-	
-	float unit_pos[] = {0.0f, 0.0f, 0.0f}; // don't start at zero, or we will be too close
-	float unit_yaw = 0.0f; // y-rotation in degrees
-	float unit_pitch = 0.0f;
-	float unit_roll = 0.0f;
-	float unit_angle = 0.0f;
-	bvec2<float> unit_velocity = bvec2<float> (0.0f, 0.0f); 
-	T = translate (identity_mat4 (), vec3 (-unit_pos[0], -unit_pos[1], -unit_pos[2]));
-	R = rotate_y_deg (identity_mat4 (), unit_yaw);
-	mat4 unit_mat = R * T;
-
 	int view_mat_location = glGetUniformLocation (shader_programme, "view");
 	glUseProgram (shader_programme);
 	glUniformMatrix4fv (view_mat_location, 1, GL_FALSE, view_mat.m);
-	
+
 	int proj_mat_location = glGetUniformLocation (shader_programme, "proj");
 	glUseProgram (shader_programme);
 	glUniformMatrix4fv (proj_mat_location, 1, GL_FALSE, proj_mat);
+
+	bg.setViewMatrix(view_mat);
 	
 	int unit_mat_location = glGetUniformLocation (shader_programme, "unit");
-	glUseProgram (shader_programme);
-	glUniformMatrix4fv (unit_mat_location, 1, GL_FALSE, unit_mat.m);
+	/*glUseProgram (shader_programme);
+	glUniformMatrix4fv (unit_mat_location, 1, GL_FALSE, unit_mat.m);*/
 
 	int cam_vec3_location = glGetUniformLocation (shader_programme, "cam");
 	glUseProgram (shader_programme);
 	glUniformMatrix4fv (cam_vec3_location, 1, GL_FALSE, cam_pos);
 	
+	//test unit class
+	unit *Units = (unit*) malloc(20 * sizeof(unit));
+
+	for(int i=0;i<20;i++){
+		Units[i] = unit(i*10.0f,fmod(i*10.0f, 50.f),0.0f);
+		Units[i].setTex(monkey_tex);
+		Units[i].setVao(monkey_vao, monkey_point_count);
+		Units[i].set_mat_location(unit_mat_location);
+	}
+
+	Units[1].setRotationSpeed(180.0f);
+	enemy test = enemy(0, &Units[1]);
+	test.setTarget(&Units[0]);
+
+	player playertest = player(GLFW_KEY_LEFT, GLFW_KEY_RIGHT, GLFW_KEY_UP, &Units[0]);
+
 
 	while (!glfwWindowShouldClose (g_window)) {
 		static double previous_seconds = glfwGetTime ();
@@ -393,9 +403,14 @@ int main () {
 		glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glViewport (0, 0, g_gl_width, g_gl_height);
 		
+		bg.draw();
+
 		glUseProgram (shader_programme);
-		glBindVertexArray (monkey_vao);
-		glDrawArrays (GL_TRIANGLES, 0, monkey_point_count);
+		/*glBindVertexArray (monkey_vao);
+		glDrawArrays (GL_TRIANGLES, 0, monkey_point_count);*/
+		for(int i = 0; i < 20; i++)
+			Units[i].draw();
+		
 		// update other events like input handling 
 		glfwPollEvents ();
 		
@@ -425,6 +440,10 @@ int main () {
 			cam_pos[2] += cam_speed * elapsed_seconds;
 			cam_moved = true;
 		}
+
+		cam_pos[0] = Units[0].get2Dpos().x;
+		cam_pos[1] = Units[0].get2Dpos().y;
+		cam_moved = true;
 		/*if (glfwGetKey (g_window, GLFW_KEY_LEFT)) {
 			cam_yaw += cam_yaw_speed * elapsed_seconds;
 			cam_moved = true;
@@ -435,7 +454,7 @@ int main () {
 		}*/
 
 		//Test angle
-		if (glfwGetKey (g_window, GLFW_KEY_LEFT)) {
+		/*if (glfwGetKey (g_window, GLFW_KEY_LEFT)) {
 			unit_angle += 360.0f  * elapsed_seconds;
 			//cam_moved = true;
 		}
@@ -446,24 +465,28 @@ int main () {
 		unit_angle = fmod(unit_angle, 360);
 		//unit_angle = fmod(unit_angle, 360.0f);
 		if (glfwGetKey(g_window, GLFW_KEY_UP)){
-			unit_velocity.x += 0.20f * cos(0.0174532925 * unit_angle);
-			unit_velocity.y += 0.20f * sin(0.0174532925 * unit_angle);
+			unit_velocity.x += 0.20f * cos(0.0174532925 * unit_angle) * elapsed_seconds;
+			unit_velocity.y += 0.20f * sin(0.0174532925 * unit_angle) * elapsed_seconds;
 			
 			if (unit_velocity.x > 2.0f) unit_velocity.x = 2.0f;
 			if (unit_velocity.x < -2.0f) unit_velocity.x = -2.0f;
 			if (unit_velocity.y > 2.0f) unit_velocity.y = 2.0f;
 			if (unit_velocity.y < -2.0f) unit_velocity.y = -2.0f;
 			
-		}
-		float test = 1.0f * cos(0.0174532925 * unit_angle);
-		printf("COS: %f\n", test);
-		unit_pos[0] += unit_velocity.x;
+		}*/
+		for(int i = 0; i < 20; i++)
+			if(i != 1 && i != 0)
+				Units[i].setAngle(1.0f*i);
+
+		test.update(elapsed_seconds);
+		playertest.update(elapsed_seconds);
+		
+		/*unit_pos[0] += unit_velocity.x;
 		unit_pos[1] += unit_velocity.y;
-		unit_velocity /= 1.01f;
+		unit_velocity /= 1.01f;*/
 
-
-		mat4 unit_mat = translate (identity_mat4 (), vec3 (unit_pos[0], unit_pos[1], unit_pos[2])) * planeAngle(unit_angle, unit_pos);
-		glUniformMatrix4fv (unit_mat_location, 1, GL_FALSE, unit_mat.m);
+		/*mat4 unit_mat = translate (identity_mat4 (), vec3 (unit_pos[0], unit_pos[1], unit_pos[2])) * planeAngle(unit_angle, unit_pos);
+		glUniformMatrix4fv (unit_mat_location, 1, GL_FALSE, unit_mat.m);*/
 		
 		// update view matrix
 		if (cam_moved) {
@@ -471,8 +494,8 @@ int main () {
 			mat4 R = rotate_y_deg (identity_mat4 (), -cam_yaw); // 
 			mat4 view_mat = R * T;
 			glUniformMatrix4fv (view_mat_location, 1, GL_FALSE, view_mat.m);
+			bg.setViewMatrix(view_mat);
 		}
-		
 		
 		if (GLFW_PRESS == glfwGetKey (g_window, GLFW_KEY_ESCAPE)) {
 			glfwSetWindowShouldClose (g_window, 1);
