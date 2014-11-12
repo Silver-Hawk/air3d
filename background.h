@@ -40,7 +40,7 @@ public:
         };
 
 
-        //generate square and colors
+        //generate square and colors buffers
         glGenBuffers (1, &points_vbo);
         glBindBuffer (GL_ARRAY_BUFFER, points_vbo);
         glBufferData (GL_ARRAY_BUFFER, 18 * sizeof (GLfloat), points, GL_STATIC_DRAW);

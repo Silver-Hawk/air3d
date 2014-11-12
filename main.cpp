@@ -25,6 +25,7 @@
 #include "enemy.h"
 #include "player.h"
 #include "background.h"
+#include "mountains.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -381,6 +382,8 @@ int main () {
 		Units[i].set_mat_location(unit_mat_location);
 	}
 
+	mountain Mo = mountain(10,10);
+
 	Units[1].setRotationSpeed(180.0f);
 	enemy test = enemy(0, &Units[1]);
 	test.setTarget(&Units[0]);
@@ -404,6 +407,9 @@ int main () {
 		glViewport (0, 0, g_gl_width, g_gl_height);
 		
 		bg.draw();
+		glClear (GL_DEPTH_BUFFER_BIT);
+
+		Mo.draw();
 
 		glClear (GL_DEPTH_BUFFER_BIT);
 		
