@@ -1,8 +1,10 @@
 #version 400
 
-out vec4 fragColor;
-in vec2 pos;
+in vec3 colour;
+in vec3 pos;
 
-void main () {
-	fragColor = vec4(1.0, 1.0, 1.0, 1.0); 
+out vec4 frag_colour;
+
+void main() {
+	frag_colour = vec4 (vec3(0.5,0.5,1.0)*(pos.y+1), 1.0);
 }

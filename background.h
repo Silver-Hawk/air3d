@@ -11,10 +11,8 @@
 class background {
 public:
 	GLuint background_shader;
-	
-	GLfloat *background_array;
 
-	GLuint vbo;
+	GLuint points_vbo, colours_vbo, vao;
 
 	int back_view_location;
 
@@ -23,30 +21,42 @@ public:
 			vs, fs
 		);
 
-		GLfloat bg[24] =
-		{
-		   -1000000.000000f, 0.000000f, 1.000000f,   //V1
-		    1.000000f, 0.000000f, 1.000000f,    //N1
-		    1.000000f, 0.000000f, 1.000000f,    //V2
-		    1.000000f, 0.000000f, 1.000000f,    //N2
-		    1.000000f, 0.000000f, -1.000000f,   //V3
-		    1.000000f, 0.000000f, 1.000000f,    //N3
-		    -1.000000f, 0.000000f, -1.000000f,  //V4
-		    1.000000f, 0.000000f, 1000000.000000f     //N4
-		};
+		GLfloat points[] = {
+                 -1.0f,  -1.0f,   0.0f,
+                 1.0f,  -1.0f,   0.0f,
+                 1.0f,  1.0f,   0.0f,
+                 1.0f,  1.0f,   0.0f,
+                 -1.0f,  1.0f,   0.0f,
+                 -1.0f,  -1.0f,   0.0f
+        };
 
-    	background_array = bg;
+        GLfloat colours[] = {
+                1.0f, 0.0f,  0.0f,
+                0.0f, 1.0f,  0.0f,
+                0.0f, 0.0f,  1.0f,
+                0.0f, 0.0f,  1.0f,
+                0.0f, 1.0f,  0.0f,
+                1.0f, 0.0f,  0.0f
+        };
 
-		glGenBuffers (1, &vbo);
-		glBindBuffer (GL_ARRAY_BUFFER, vbo);
-		glBufferData (
-			GL_ARRAY_BUFFER,
-			3 * 4 * sizeof (GLfloat),
-			bg,
-			GL_STATIC_DRAW
-		);
-		glVertexAttribPointer (0, 4, GL_FLOAT, GL_FALSE, 0, NULL);
-		glEnableVertexAttribArray (0);
+
+        //generate square and colors
+        glGenBuffers (1, &points_vbo);
+        glBindBuffer (GL_ARRAY_BUFFER, points_vbo);
+        glBufferData (GL_ARRAY_BUFFER, 18 * sizeof (GLfloat), points, GL_STATIC_DRAW);
+
+        glGenBuffers (1, &colours_vbo);
+        glBindBuffer (GL_ARRAY_BUFFER, colours_vbo);
+        glBufferData (GL_ARRAY_BUFFER, 18 * sizeof (GLfloat), colours, GL_STATIC_DRAW);
+
+        glGenVertexArrays (1, &vao);
+        glBindVertexArray (vao);
+        glBindBuffer (GL_ARRAY_BUFFER, points_vbo);
+        glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+        glBindBuffer (GL_ARRAY_BUFFER, colours_vbo);
+        glVertexAttribPointer (1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+        glEnableVertexAttribArray (0);
+        glEnableVertexAttribArray (1);
 	}
 
 	void setViewMatrix(mat4 view_mat) {
@@ -54,15 +64,17 @@ public:
 		glUseProgram (background_shader);
 		glUniformMatrix4fv (back_view_location, 1, GL_FALSE, view_mat.m);
 	}
+
 	void draw() {
 		glUseProgram (background_shader);
-		
-		//bind vertex array
-		glBindBuffer (GL_ARRAY_BUFFER, vbo);
-		glVertexAttribPointer (3, 4, GL_FLOAT, GL_FALSE, 0, NULL);
-		glEnableVertexAttribArray (0);
-		glBindVertexArray (vbo);
-		glDrawArrays (GL_TRIANGLES, 0, 12);
+		glBindVertexArray (vao);
+        glBindBuffer (GL_ARRAY_BUFFER, points_vbo);
+        glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+        glBindBuffer (GL_ARRAY_BUFFER, colours_vbo);
+        glVertexAttribPointer (1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+        glEnableVertexAttribArray (0);
+        glEnableVertexAttribArray (1);
+		glDrawArrays (GL_TRIANGLES, 0, 6);
 	}
 	
 };

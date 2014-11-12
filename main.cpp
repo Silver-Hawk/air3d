@@ -405,6 +405,8 @@ int main () {
 		
 		bg.draw();
 
+		glClear (GL_DEPTH_BUFFER_BIT);
+		
 		glUseProgram (shader_programme);
 		/*glBindVertexArray (monkey_vao);
 		glDrawArrays (GL_TRIANGLES, 0, monkey_point_count);*/

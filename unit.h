@@ -147,7 +147,6 @@ public:
 	void applyVelocity(){
 		pos[0] += velocity.x;
 		pos[1] += velocity.y;
-		velocityFade();
 	}
 
 	void draw(){
