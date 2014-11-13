@@ -361,8 +361,6 @@ int main () {
 	int proj_mat_location = glGetUniformLocation (shader_programme, "proj");
 	glUseProgram (shader_programme);
 	glUniformMatrix4fv (proj_mat_location, 1, GL_FALSE, proj_mat);
-
-	bg.setViewMatrix(view_mat);
 	
 	int unit_mat_location = glGetUniformLocation (shader_programme, "unit");
 	/*glUseProgram (shader_programme);
@@ -409,7 +407,8 @@ int main () {
 		bg.draw();
 		glClear (GL_DEPTH_BUFFER_BIT);
 
-		Mo.draw();
+		Mo.update(view_mat, proj_mat);
+		Mo.draw(elapsed_seconds);
 
 		glClear (GL_DEPTH_BUFFER_BIT);
 		
@@ -452,49 +451,13 @@ int main () {
 		cam_pos[0] = Units[0].get2Dpos().x;
 		cam_pos[1] = Units[0].get2Dpos().y;
 		cam_moved = true;
-		/*if (glfwGetKey (g_window, GLFW_KEY_LEFT)) {
-			cam_yaw += cam_yaw_speed * elapsed_seconds;
-			cam_moved = true;
-		}
-		if (glfwGetKey (g_window, GLFW_KEY_RIGHT)) {
-			cam_yaw -= cam_yaw_speed * elapsed_seconds;
-			cam_moved = true;
-		}*/
-
-		//Test angle
-		/*if (glfwGetKey (g_window, GLFW_KEY_LEFT)) {
-			unit_angle += 360.0f  * elapsed_seconds;
-			//cam_moved = true;
-		}
-		if (glfwGetKey (g_window, GLFW_KEY_RIGHT)) {
-			unit_angle -= 360.0f * elapsed_seconds;
-			//cam_moved = true;
-		}
-		unit_angle = fmod(unit_angle, 360);
-		//unit_angle = fmod(unit_angle, 360.0f);
-		if (glfwGetKey(g_window, GLFW_KEY_UP)){
-			unit_velocity.x += 0.20f * cos(0.0174532925 * unit_angle) * elapsed_seconds;
-			unit_velocity.y += 0.20f * sin(0.0174532925 * unit_angle) * elapsed_seconds;
-			
-			if (unit_velocity.x > 2.0f) unit_velocity.x = 2.0f;
-			if (unit_velocity.x < -2.0f) unit_velocity.x = -2.0f;
-			if (unit_velocity.y > 2.0f) unit_velocity.y = 2.0f;
-			if (unit_velocity.y < -2.0f) unit_velocity.y = -2.0f;
-			
-		}*/
+	
 		for(int i = 0; i < 20; i++)
 			if(i != 1 && i != 0)
-				Units[i].setAngle(1.0f*i);
+				Units[i].setAngle(30.0f*i);
 
 		test.update(elapsed_seconds);
 		playertest.update(elapsed_seconds);
-		
-		/*unit_pos[0] += unit_velocity.x;
-		unit_pos[1] += unit_velocity.y;
-		unit_velocity /= 1.01f;*/
-
-		/*mat4 unit_mat = translate (identity_mat4 (), vec3 (unit_pos[0], unit_pos[1], unit_pos[2])) * planeAngle(unit_angle, unit_pos);
-		glUniformMatrix4fv (unit_mat_location, 1, GL_FALSE, unit_mat.m);*/
 		
 		// update view matrix
 		if (cam_moved) {
@@ -503,6 +466,7 @@ int main () {
 			mat4 view_mat = R * T;
 			glUniformMatrix4fv (view_mat_location, 1, GL_FALSE, view_mat.m);
 			bg.setViewMatrix(view_mat);
+			Mo.update(view_mat, proj_mat);
 		}
 		
 		if (GLFW_PRESS == glfwGetKey (g_window, GLFW_KEY_ESCAPE)) {
