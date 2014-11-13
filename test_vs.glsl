@@ -5,7 +5,6 @@ layout(location = 1) in vec3 vertex_normal;
 layout(location = 2) in vec2 texture_coord;
 
 uniform mat4 view, proj, unit;
-uniform vec3 cam;
 
 out vec3 normal;
 out vec2 st;

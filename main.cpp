@@ -413,41 +413,13 @@ int main () {
 		glClear (GL_DEPTH_BUFFER_BIT);
 		
 		glUseProgram (shader_programme);
-		/*glBindVertexArray (monkey_vao);
-		glDrawArrays (GL_TRIANGLES, 0, monkey_point_count);*/
+		
 		for(int i = 0; i < 20; i++)
 			Units[i].draw();
 		
 		// update other events like input handling 
 		glfwPollEvents ();
 		
-		// control keys
-		bool cam_moved = false;
-		if (glfwGetKey (g_window, GLFW_KEY_A)) {
-			cam_pos[0] -= cam_speed * elapsed_seconds;
-			cam_moved = true;
-		}
-		if (glfwGetKey (g_window, GLFW_KEY_D)) {
-			cam_pos[0] += cam_speed * elapsed_seconds;
-			cam_moved = true;
-		}
-		if (glfwGetKey (g_window, GLFW_KEY_PAGE_UP)) {
-			cam_pos[1] += cam_speed * elapsed_seconds;
-			cam_moved = true;
-		}
-		if (glfwGetKey (g_window, GLFW_KEY_PAGE_DOWN)) {
-			cam_pos[1] -= cam_speed * elapsed_seconds;
-			cam_moved = true;
-		}
-		if (glfwGetKey (g_window, GLFW_KEY_W)) {
-			cam_pos[2] -= cam_speed * elapsed_seconds;
-			cam_moved = true;
-		}
-		if (glfwGetKey (g_window, GLFW_KEY_S)) {
-			cam_pos[2] += cam_speed * elapsed_seconds;
-			cam_moved = true;
-		}
-
 		cam_pos[0] = Units[0].get2Dpos().x;
 		cam_pos[1] = Units[0].get2Dpos().y;
 		cam_moved = true;
@@ -469,6 +441,7 @@ int main () {
 			Mo.update(view_mat, proj_mat);
 		}
 		
+		//close game
 		if (GLFW_PRESS == glfwGetKey (g_window, GLFW_KEY_ESCAPE)) {
 			glfwSetWindowShouldClose (g_window, 1);
 		}
