@@ -100,11 +100,6 @@ public:
 			deltaangle += 360.0f;
 
 		float use = std::min(deltaangle, rotation_speed * delta);
-		printf("targetangle %f\n", targetangle);
-		printf("angle %f\n", angle);
-		printf("deltaangle %f\n", deltaangle);
-		printf("rotation_speed * delta %f\n", rotation_speed * delta);
-		printf("use %f\n", use);
 		if(deltaangle > 180.0f){
 			addAngle(-use);
 		}else{
@@ -119,7 +114,6 @@ public:
 		angle = fmod(angle, 360);
 		if (angle < 0)
 			angle += 360;
-		printf("Angle %f\n", angle);
 	}
 
 	float getAngle() {

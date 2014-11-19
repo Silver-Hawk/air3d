@@ -1,14 +1,11 @@
 #ifndef __MOUNTAIN_CLASS_H__
 #define __MOUNTAIN_CLASS_H__
 
-struct vertex
-{
-	GLfloat x, y, z;
-};
-
 class mountain {
 	public:
 	int x, y, triangleCount;
+
+	float pos_x, pos_y, pos_z;
 
 	float *map;
 
@@ -16,9 +13,10 @@ class mountain {
 	int mesh_indices;
 
 	GLfloat *vertices;
+	GLfloat *normals;
 
 	//buffers
-	GLuint points_vbo, colours_vbo, vao;
+	GLuint points_vbo, normals_vbo, vao;
 
 	//shader
 	GLuint shader;
@@ -26,11 +24,12 @@ class mountain {
 	//cam and view matrix
 	//shader x,y,z location
 	int mountain_location, view_mat_location, proj_mat_location;
+
 	mat4 mountain_mat, view;
 
 	mountain(int x, int y) : x(x), y(y) {
 		triangleCount = x * y * 2 * 3;
-		map = (float*) malloc(sizeof(int) * x * y);
+		map = (float*) malloc(sizeof(float) * x * y);
 
 		srand(time(0));
 
@@ -42,9 +41,9 @@ class mountain {
 		//bind mountains in the background
 		//mountain_location = glGetUniformLocation (shader, "unit");
 
-		view_mat_location = glGetUniformLocation (shader, "view");
-		proj_mat_location = glGetUniformLocation (shader, "proj");
+		this->view_mat_location = glGetUniformLocation (shader, "view");
 		mountain_location = glGetUniformLocation (shader, "unit");
+		proj_mat_location = glGetUniformLocation (shader, "proj");
  
 		//glUniformMatrix4fv (mountain_location, 1, GL_FALSE, mountain_mat.m);
 
@@ -57,7 +56,7 @@ class mountain {
 
 		//generate triangles
 		mesh = (GLfloat *) malloc(triangleCount * sizeof(GLfloat));
-		printf("TRIANGLES %i \n", triangleCount);
+		
 		int jf = 0;
 		int count = 0;
 		for (int j = 0; j < y-1; j++)
@@ -79,7 +78,7 @@ class mountain {
 
                 	count += 3;
                 }
-                printf("COUNT %i\n", count);
+                //printf("COUNT %i\n", count);
                 jf++;
              }
 
@@ -88,17 +87,26 @@ class mountain {
         printMesh();
 
         vertices = (GLfloat *) malloc(sizeof(GLfloat) * mesh_indices * 3);
+		normals = (GLfloat *) malloc(sizeof(GLfloat) * mesh_indices * 3);
 
         float normx = 2.0f; //(1.0f/(x-1));
         float normy = 2.0f; //(1.0f/(y-1));
 
-        printf("\n");
+        //printf("\n");
         for(int i = 0; i < mesh_indices; i++){
-    		printf("[%i]: %i %i %f\n", i, convertMeshDataToX(i), convertMeshDataToY(i), mesh[i]);
-        	vertices[i*3]   = -0.5 + convertMeshDataToX(i)*normx; 
-        	vertices[i*3+1] = 5.0f * map[(int) mesh[i]];//mesh[i+1] * map[i];
-        	vertices[i*3+2] = -0.5 + convertMeshDataToY(i)*normy;//mesh[i] * normy;//mesh[i+2] * normy;
-        	printf("Created vertice x:%f y:%f z:%f\n", vertices[i], vertices[i+1], vertices[i+2]);	
+    		//printf("[%i]: %i %i %f\n", i, convertMeshDataToX(i), convertMeshDataToY(i), mesh[i]);
+        	vertices[i*3]   = vertData[mesh[i]].x; 
+        	vertices[i*3+1] = vertData[mesh[i]].y;//mesh[i+1] * map[i];
+        	vertices[i*3+2] = vertData[mesh[i]].z;//mesh[i] * normy;//mesh[i+2] * normy;
+        	//printf("Created vertice x:%f y:%f z:%f\n", vertices[i], vertices[i+1], vertices[i+2]);
+
+
+        	//calculate normals
+        	float A=vertices[i*3],B=vertices[i*3+1],C=vertices[i*3+2];
+
+        	normals[i*3]    = vertices[i*3];
+        	normals[i*3+1]  = vertices[i*3+1];
+        	normals[i*3+2]  = vertices[i*3+2];
         }
 
         printVertices();
@@ -107,11 +115,19 @@ class mountain {
         glBindBuffer (GL_ARRAY_BUFFER, points_vbo);
         glBufferData (GL_ARRAY_BUFFER, mesh_indices * sizeof (GLfloat) * 3, vertices, GL_STATIC_DRAW);
 
+        glGenBuffers (1, &normals_vbo);
+		glBindBuffer (GL_ARRAY_BUFFER, normals_vbo);
+        glBufferData (GL_ARRAY_BUFFER, mesh_indices * sizeof (GLfloat) * 3, normals, GL_STATIC_DRAW);
+
+
         glGenVertexArrays (1, &vao);
         glBindVertexArray (vao);
         glBindBuffer (GL_ARRAY_BUFFER, points_vbo);
         glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+        glBindBuffer (GL_ARRAY_BUFFER, normals_vbo);
+        glVertexAttribPointer (1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
         glEnableVertexAttribArray (0);
+        glEnableVertexAttribArray (1);
 	}
 
 	int convertMeshDataToX(int i){
@@ -138,17 +154,28 @@ class mountain {
 
 	void update(mat4 view_mat, GLfloat *proj_mat){
 		glUseProgram(shader);
-		view = view_mat;
 		glUniformMatrix4fv (proj_mat_location, 1, GL_FALSE, proj_mat);
+		
+		glUseProgram(shader);
 		glUniformMatrix4fv (view_mat_location, 1, GL_FALSE, view_mat.m);
+		
+		glUseProgram(shader);
 		glUniformMatrix4fv (mountain_location, 1, GL_FALSE, mountain_mat.m);
 	}
 
-	void draw(float delta) {
+	void draw(float delta, mat4 view_mat) {
 		glUseProgram(shader);
-		mountain_location = glGetUniformLocation(shader, "unit");
-		mat4 mountain_m = translate (identity_mat4 (), vec3 (0.0f + delta , 0.0f , 50.0f + delta));
-		glUniformMatrix4fv (mountain_location, 1, GL_FALSE, mountain_m.m);
+		//mountain_location = glGetUniformLocation(shader, "unit");
+		//pos_z += delta;
+		//mat4 T = translate (identity_mat4 (), vec3 (0.5f, 0.5f, 0.5f));
+		mat4 mountain_m = translate (identity_mat4 (), vec3 (pos_x, pos_y, pos_z));
+
+
+		//const float *pSource = (const float*)glm::value_ptr(pMat4);
+
+
+		glUniformMatrix4fv (mountain_location, 1, GL_FALSE, mountain_m.m);		
+		glUniformMatrix4fv (view_mat_location, 1, GL_FALSE, view_mat.m);
 
 		glBindVertexArray (vao);
         glBindBuffer (GL_ARRAY_BUFFER, points_vbo);

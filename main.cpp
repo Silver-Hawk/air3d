@@ -1,17 +1,3 @@
-/******************************************************************************\
-| OpenGL 4 Example Code.                                                       |
-| Accompanies written series "Anton's OpenGL 4 Tutorials"                      |
-| Email: anton at antongerdelan dot net                                        |
-| First version 27 Jan 2014                                                    |
-| Copyright Dr Anton Gerdelan, Trinity College Dublin, Ireland.                |
-| See individual libraries for separate legal notices                          |
-|******************************************************************************|
-| This demo uses the Assimp library to load a mesh from a file, and supports   |
-| many formats. The library is VERY big and complex. It's much easier to write |
-| a simple Wavefront .obj loader. I have code for this in other demos. However,|
-| Assimp will load animated meshes, which will we need to use later, so this   |
-| demo is a starting point before doing skinning animation                     |
-\******************************************************************************/
 #include "maths_funcs.h"
 #include "gl_utils.h"
 #include <assimp/cimport.h> // C importer
@@ -20,12 +6,6 @@
 #include <GL/glew.h> // include GLEW and new version of GL on Windows
 #include <GLFW/glfw3.h> // GLFW helper library
 #include "stb_image.h" //Sean image loader from 09
-#include "bvec.h"
-#include "unit.h"
-#include "enemy.h"
-#include "player.h"
-#include "background.h"
-#include "mountains.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -35,6 +15,16 @@
 #define VERTEX_SHADER_FILE "test_vs.glsl"
 #define FRAGMENT_SHADER_FILE "test_fs.glsl"
 #define MESH_FILE "mergedjet3.obj"
+
+//Game classes
+#include "bvec.h"
+#include "unit.h"
+#include "enemy.h"
+#include "player.h"
+#include "background.h"
+#include "mountains2.h"
+#include "cam.h"
+
 
 // keep track of window size for things like the viewport and the mouse cursor
 int g_gl_width = 800;
@@ -151,9 +141,7 @@ bool load_mesh (const char* file_name, GLuint* vao, int* point_count) {
 		}
 
 	printf("xmiddle: %f\n",xnumber/numbers);
-
 	printf("ymiddle: %f\n",ynumber/numbers);
-
 	printf("zmiddle: %f\n",znumber/numbers);
 	}
 	if (mesh->HasNormals ()) {
@@ -227,70 +215,10 @@ bool load_mesh (const char* file_name, GLuint* vao, int* point_count) {
 	return true;
 }
 
-/**
-	look at mouse airplane mode
-	should have a unit class passed
-*/
-mat4 lookAtMouse(float *unit_pos) {
-	double xpos, ypos;
-	glfwGetCursorPos(g_window, &xpos, &ypos);
-	printf ("MOUSE: x: %f y: %f\n", xpos, ypos);
-	float xrel, yrel;
-	xrel = xpos/g_gl_width;
-	yrel = ypos/g_gl_height;
-	printf ("MOUSE_REL: x: %f y: %f\n", xrel, yrel);
-	float xmid, ymid;
-	xmid = 0.5f;
-	ymid = 0.5f;
-
-	bvec2<float> pos = bvec2<float>(xmid, ymid);
-	bvec2<float> point = bvec2<float>(xrel, yrel);
-	bvec2<float> delta = pos - point;
-	float angle;
-	angle = atan2(delta.x, delta.y);
-	printf ("ANGLE: %f\n", angle);
-	bvec2<float> dir = bvec2<float>(cos(angle), sin(angle));
-	printf ("DIR: x: %f y: %f\n", dir.x, dir.y);
-
-	float unit_yaw = dir.x*90;
-	float unit_roll = -90+dir.y*90;
-	float unit_pitch = 0.0f;//dir.y*100 
-
-	//unit_pos[2] += cam_speed * elapsed_seconds; 
-	mat4 T = translate (identity_mat4 (), vec3 (unit_pos[0], unit_pos[1], unit_pos[2])); // unit translation
-
-	mat4 R1 = rotate_x_deg (identity_mat4 (), unit_yaw); // 
-	mat4 R2 = rotate_y_deg (identity_mat4 (), unit_roll); // 
-	mat4 R3 = rotate_z_deg (identity_mat4 (), unit_pitch); // 
-	return R1 * R2 * R3 * T;
-}
-
-//return models rotation
-mat4 planeAngle(float angle, float *unit_pos){
-	angle = angle;// * 3.33f;
-	float unit_yaw = angle;///-45+(angle*33.0f);
-	float unit_roll = 180.0f;//(angle*33.0f);
-	float unit_pitch = 180.0f;//dir.y*100 ;
-	printf ("ANGLE: %f\n", angle);
-	//printf ("DIR: x: %f y: %f\n", dir.x, dir.y);
-	printf ("UNIT_YAW: %f\n", unit_yaw);
-
-	//unit_pos[2] += cam_speed * elapsed_seconds; 
-	mat4 T = translate (identity_mat4 (), vec3 (-5.481503f/2, 0.251155f/2, 0.004155f/2));//unit_pos[0], unit_pos[1], unit_pos[2])); // unit translation
-
-	mat4 R1 = rotate_y_deg (identity_mat4 (), unit_yaw); // 
-	mat4 R2 = rotate_x_deg (identity_mat4 (), unit_roll); // 
-	mat4 R3 = rotate_z_deg (identity_mat4 (), unit_pitch); // 
-	//return rotate_x_deg(T, angle * 20.f);
-	return rotate_z_deg(rotate_x_deg(R2 * R3 * T, angle), unit_yaw);
-}
-bvec2<float> planeDirection(float angle){
-	return bvec2<float>(cos(angle), sin(angle));
-}
-
 int main () {
 	assert (restart_gl_log ());
 	assert (start_gl ());
+
 	glEnable (GL_DEPTH_TEST); // enable depth-testing
 	glDepthFunc (GL_LESS); // depth-testing interprets a smaller value as "closer"
 	glEnable (GL_CULL_FACE); // cull face
@@ -344,35 +272,24 @@ int main () {
 	assert (load_texture("AudioEquipment0039_2_S.jpg", &monkey_tex));
 	glBindTexture (GL_TEXTURE_2D, monkey_tex);
 
-	float cam_speed = 25.0f; // 1 unit per second
-	float cam_yaw_speed = 33.0f; // 10 degrees per second
-	float cam_pos[] = {0.0f, 0.0f, 100.0f}; // don't start at zero, or we will be too close
-	float cam_yaw = 0.0f; // y-rotation in degrees
-	mat4 T = translate (identity_mat4 (), vec3 (-cam_pos[0], -cam_pos[1], -cam_pos[2]));
-	mat4 R = rotate_y_deg (identity_mat4 (), -cam_yaw);
-	mat4 view_mat = R * T;
+	cam camera = cam();
+	mat4 view_mat = camera.getViewMat(); 
 
 	//vec3 view_dir = view_mat * cam_pos;
 
 	int view_mat_location = glGetUniformLocation (shader_programme, "view");
 	glUseProgram (shader_programme);
-	glUniformMatrix4fv (view_mat_location, 1, GL_FALSE, view_mat.m);
+	glUniformMatrix4fv (view_mat_location, 1, GL_FALSE, camera.getViewMat().m);
 
 	int proj_mat_location = glGetUniformLocation (shader_programme, "proj");
 	glUseProgram (shader_programme);
 	glUniformMatrix4fv (proj_mat_location, 1, GL_FALSE, proj_mat);
 	
 	int unit_mat_location = glGetUniformLocation (shader_programme, "unit");
-	/*glUseProgram (shader_programme);
-	glUniformMatrix4fv (unit_mat_location, 1, GL_FALSE, unit_mat.m);*/
-
-	int cam_vec3_location = glGetUniformLocation (shader_programme, "cam");
-	glUseProgram (shader_programme);
-	glUniformMatrix4fv (cam_vec3_location, 1, GL_FALSE, cam_pos);
 	
 	//test unit class
 	unit *Units = (unit*) malloc(20 * sizeof(unit));
-
+	
 	for(int i=0;i<20;i++){
 		Units[i] = unit(i*10.0f,fmod(i*10.0f, 50.f),0.0f);
 		Units[i].setTex(monkey_tex);
@@ -380,11 +297,16 @@ int main () {
 		Units[i].set_mat_location(unit_mat_location);
 	}
 
-	mountain Mo = mountain(10,10);
+	mountain Mo = mountain(128,128);
 
 	Units[1].setRotationSpeed(180.0f);
-	enemy test = enemy(0, &Units[1]);
-	test.setTarget(&Units[0]);
+
+	enemy *enemytest = (enemy*) malloc(19 * sizeof(enemy));
+
+	for(int i=0;i<19;i++){
+		enemytest[i] = enemy(0, &Units[i+1]);
+		enemytest[i].setTarget(&Units[0]);
+	}
 
 	player playertest = player(GLFW_KEY_LEFT, GLFW_KEY_RIGHT, GLFW_KEY_UP, &Units[0]);
 
@@ -395,10 +317,6 @@ int main () {
 		double elapsed_seconds = current_seconds - previous_seconds;
 		previous_seconds = current_seconds;
 
-		
-		/*mat4 unit_mat = lookAtMouse(unit_pos);
-		glUniformMatrix4fv (unit_mat_location, 1, GL_FALSE, unit_mat.m);*/
-	
 		_update_fps_counter (g_window);
 		// wipe the drawing surface clear
 		glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -407,41 +325,68 @@ int main () {
 		bg.draw();
 		glClear (GL_DEPTH_BUFFER_BIT);
 
-		Mo.update(view_mat, proj_mat);
-		Mo.draw(elapsed_seconds);
+		Mo.draw(elapsed_seconds, camera.getViewMat());
 
 		glClear (GL_DEPTH_BUFFER_BIT);
 		
 		glUseProgram (shader_programme);
-		
 		for(int i = 0; i < 20; i++)
 			Units[i].draw();
 		
 		// update other events like input handling 
 		glfwPollEvents ();
 		
-		cam_pos[0] = Units[0].get2Dpos().x;
-		cam_pos[1] = Units[0].get2Dpos().y;
-		cam_moved = true;
-	
-		for(int i = 0; i < 20; i++)
-			if(i != 1 && i != 0)
-				Units[i].setAngle(30.0f*i);
+		// control keys
+		bool cam_moved = false;
+		if (glfwGetKey (g_window, GLFW_KEY_A)) {
+			//cam_pos[0] -= cam_speed * elapsed_seconds;
+			cam_moved = true;
+		}
+		if (glfwGetKey (g_window, GLFW_KEY_D)) {
+			//cam_pos[0] += cam_speed * elapsed_seconds;
+			cam_moved = true;
+		}
+		if (glfwGetKey (g_window, GLFW_KEY_PAGE_UP)) {
+			//cam_pos[1] += cam_speed * elapsed_seconds;
+			cam_moved = true;
+		}
+		if (glfwGetKey (g_window, GLFW_KEY_PAGE_DOWN)) {
+			//cam_pos[1] -= cam_speed * elapsed_seconds;
+			cam_moved = true;
+		}
+		if (glfwGetKey (g_window, GLFW_KEY_W)) {
+			camera.setDeltaZ(-elapsed_seconds);
+			cam_moved = true;
+		}
+		if (glfwGetKey (g_window, GLFW_KEY_S)) {
+			camera.setDeltaZ(elapsed_seconds);
+			cam_moved = true;
+		}
 
-		test.update(elapsed_seconds);
+		
+
+		/*cam_pos[0] = Units[0].get2Dpos().x;
+		cam_pos[1] = Units[0].get2Dpos().y;*/
+		cam_moved = true;
+
+		camera.getViewMat();
+	
+		
+		for(int i=0; i<19; i++)
+			enemytest[i].update(elapsed_seconds);
 		playertest.update(elapsed_seconds);
 		
+		camera.setX(Units[0].get2Dpos().x);
+		camera.setY(Units[0].get2Dpos().y);
+
 		// update view matrix
 		if (cam_moved) {
-			mat4 T = translate (identity_mat4 (), vec3 (-cam_pos[0], -cam_pos[1], -cam_pos[2])); // cam translation
-			mat4 R = rotate_y_deg (identity_mat4 (), -cam_yaw); // 
-			mat4 view_mat = R * T;
+			mat4 view_mat = camera.getViewMat();
 			glUniformMatrix4fv (view_mat_location, 1, GL_FALSE, view_mat.m);
 			bg.setViewMatrix(view_mat);
 			Mo.update(view_mat, proj_mat);
 		}
 		
-		//close game
 		if (GLFW_PRESS == glfwGetKey (g_window, GLFW_KEY_ESCAPE)) {
 			glfwSetWindowShouldClose (g_window, 1);
 		}

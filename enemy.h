@@ -43,19 +43,16 @@ public:
 		bvec2<float>dir = targetdir - selfdir; 
 		dir.normalize();
 		SPEED_SETUP = SPEED_MAX;
-
-		printf("lol: %f, %f\n", dir.x, dir.y);
 		return dir;
 	}
 
 	void calculate_changes(float delta, bvec2<float> steer){
-
-		self->alignAngle(delta, atan2(steer.y, steer.x)*57.2957795);
-		float test = self->getAngle();
-
+		float minusr = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX));
+		float plusr = static_cast <float> (rand()) / (static_cast <float> (RAND_MAX));
+		self->alignAngle(delta, atan2(steer.y, steer.x)*57.2957795+(plusr-minusr));
+		
 		if(SPEED_SETUP == SPEED_MAX){
 			self->addVelocity(0.2f * delta);
-			printf("yow angle is %f\n", test);
 		}
 
 		self->applyVelocity();

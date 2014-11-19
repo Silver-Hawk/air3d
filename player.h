@@ -19,7 +19,6 @@ public:
 		}
 		//unit_angle = fmod(unit_angle, 360.0f);
 		if (glfwGetKey(g_window, up)){
-			printf("LOLOLOLOLO\n");
 			self->addVelocity(delta);
 		}
 		self->applyVelocity();
