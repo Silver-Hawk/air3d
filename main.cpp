@@ -17,6 +17,7 @@
 #define MESH_FILE "mergedjet3.obj"
 
 //Game classes
+#include "helpers.h"
 #include "bvec.h"
 #include "unit.h"
 #include "enemy.h"
@@ -30,7 +31,7 @@
 int g_gl_width = 800;
 int g_gl_height = 600;
 GLFWwindow* g_window = NULL;
-
+/*
 bool load_texture (const char* file_name, GLuint* tex) {
 	int x, y, n;
 	int force_channels = 4;
@@ -87,6 +88,7 @@ bool load_texture (const char* file_name, GLuint* tex) {
 	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, max_aniso);
 	return true;
 }
+*/
 
 /* load a mesh using the assimp library */
 bool load_mesh (const char* file_name, GLuint* vao, int* point_count) {
@@ -224,6 +226,10 @@ int main () {
 	glEnable (GL_CULL_FACE); // cull face
 	glCullFace (GL_BACK); // cull back face
 	glFrontFace (GL_CCW); // set counter-clock-wise vertex order to mean the front
+	
+	//Enable blending
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable( GL_BLEND );
 	glClearColor (0.2, 0.2, 0.2, 1.0); // grey background to help spot mistakes
 	glViewport (0, 0, g_gl_width, g_gl_height);
 
@@ -297,7 +303,7 @@ int main () {
 		Units[i].set_mat_location(unit_mat_location);
 	}
 
-	mountain Mo = mountain(128,128);
+	mountain Mo = mountain(10,10);
 
 	Units[1].setRotationSpeed(180.0f);
 
@@ -363,12 +369,7 @@ int main () {
 			cam_moved = true;
 		}
 
-		
-
-		/*cam_pos[0] = Units[0].get2Dpos().x;
-		cam_pos[1] = Units[0].get2Dpos().y;*/
 		cam_moved = true;
-
 		camera.getViewMat();
 	
 		
