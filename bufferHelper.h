@@ -6,12 +6,18 @@
 #define __BUFFER_HELPER_CLASS_H__
 
 class bufferhelper {
-public:
-	GLuint *vao;
+	public:
+	GLuint vao;
 	GLuint *buffers;
+	int bufCount;
 	int *vecType; //contains information about what type of vectors is used
 
+	bufferhelper(){
+
+	}
+
 	bufferhelper(int buffer_count){
+		bufCount = buffer_count;
 		//create an extra buffer for vertex array
 		glGenVertexArrays (1, &vao);
 
@@ -31,7 +37,7 @@ public:
 
 	void bindAll(){
 		glBindVertexArray (vao);
-		for(int i = 0; i < buffer_count; i++){
+		for(int i = 0; i < bufCount; i++){
 			glBindBuffer (GL_ARRAY_BUFFER, buffers[i]);
         	glVertexAttribPointer (i, vecType[i], GL_FLOAT, GL_FALSE, 0, NULL);
         	glEnableVertexAttribArray (i); //enable them in shaders
@@ -39,7 +45,7 @@ public:
 	}
 	
 	void send(){
-
+		glBindVertexArray(vao);
 	}
 };
 

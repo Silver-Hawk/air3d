@@ -2,6 +2,9 @@
 #define __MOUNTAIN_CLASS_H__
 
 #include "glm/glm.hpp"
+#include "bufferHelper.h"
+#include "shaderhelper.h"
+#include "texturehelper.h"
 
 class mountain {
 	public:
@@ -16,12 +19,16 @@ class mountain {
 
 	GLfloat *vertices;
 	GLfloat *normals;
+	GLfloat *uvarray;
 
 	//buffers
 	GLuint points_vbo, normals_vbo, vao, tex, tex_vbo;
 
 	//shader
-	GLuint shader;
+	shaderhelper shader;
+
+	bufferhelper bufHelp;
+	texturehelper texHelp;
 
 	//cam and view matrix
 	//shader x,y,z location
@@ -35,15 +42,12 @@ class mountain {
 
 		srand(time(0));
 
-		shader = create_programme_from_files (
-			"mountain_vs.glsl", "mountain_fs.glsl"
-		);
-		
-		glUseProgram(shader);
+		shader = shaderhelper ("mountain_vs.glsl", "mountain_fs.glsl", 3);
+		shader.use();
 
-		view_mat_location = glGetUniformLocation (shader, "view");
-		mountain_location = glGetUniformLocation (shader, "unit");
-		proj_mat_location = glGetUniformLocation (shader, "proj");
+		view_mat_location = shader.setLocation("view", 0);
+		mountain_location = shader.setLocation("unit", 1);
+		proj_mat_location = shader.setLocation("proj", 2);
 
 		//generate random heightmap
 		/*
@@ -56,44 +60,32 @@ class mountain {
 				:
 				map[i + (j*x)] = 0.0f;
 
-		//BoxFilterHeightMap(x,y,map,false);
+		BoxFilterHeightMap(x,y,map,false);
 
 		//generate coordinate data
 		glm::vec3* vertData = (glm::vec3*) malloc(sizeof(glm::vec3) * x * y);
-		GLfloat* uvData = (GLfloat*) malloc(sizeof(GLfloat) * x * y * 2);
-		float texU = x*0.1f;
-		float texV = y*0.1f;
+		glm::vec2* uvData = (glm::vec2*) malloc(sizeof(glm::vec2) * x * y);
+		
+		//normally x*0.1f
+		float texU = x*(1.0f/(float)x);//1.0f/(float)x;
+		float texV = y*(1.0f/(float)y);//1.0f/(float)y;
 
 
 		for(int i = 0; i < x; i++)
 			for(int j = 0; j < y; j++)
 			{
+				//triangle mapping
 				float xScale = (float) i / float (x - 1);
 				float zScale = (float) j / float (y - 1);
-
-				//texture mapping
-				float scaleCol = ((float)i)/(x-1);
-				float scaleRow = ((float)j)/(y-1);
-
-
+				
 				vertData[j + (i*x)] = glm::vec3(-0.5f+ xScale, map[i + (j*x)], -0.5f+ zScale);
-				uvData[j*2 + (i*x)] = scaleRow*texU;
-				//printf("scale %f tex %f\n", scaleRow, texU);
-				//printf("uvData[%i] = %f\n", j*2 + (i*x),(float)scaleRow*texU);
-				uvData[j*2 + (i*x) + 1] = scaleCol*texV; 
-				//printf("uvData[%i] = %f\n", j*2 + (i*x) + 1,scaleCol*texV);
+				
+				//texture mapping
+				float scaleCol = ((float)i)/(x-1) *texU;
+				float scaleRow = ((float)j)/(y-1) *texV;
 
-
+				uvData[j + (i*x)] = glm::vec2(scaleRow*texU, scaleCol*texV);
 			}
-
-
-		//bind texture
-		tex_location = glGetUniformLocation (shader, "basic_texture");
-		glUniform1i (tex_location, 0);
-	
-		glActiveTexture (GL_TEXTURE0);
-		assert (load_texture("mountain.jpg", &tex));
-		glBindTexture (GL_TEXTURE_2D, tex);
 
 		//generate triangles
 		mesh = (GLfloat *) malloc(triangleCount * sizeof(GLfloat));
@@ -125,6 +117,7 @@ class mountain {
 
         vertices = (GLfloat *) malloc(sizeof(GLfloat) * mesh_indices * 3);
 		normals = (GLfloat *) malloc(sizeof(GLfloat) * mesh_indices * 3);
+		uvarray = (GLfloat *) malloc(sizeof(GLfloat) * mesh_indices * 2);
 
         for(int i = 0; i < mesh_indices; i++){
     		vertices[i*3]   = vertData[(int)mesh[i]].x; 
@@ -134,79 +127,39 @@ class mountain {
         	normals[i*3]    = vertices[i*3];
         	normals[i*3+1]  = vertices[i*3+1];
         	normals[i*3+2]  = vertices[i*3+2];
+
+        	uvarray[i*2] = uvData[(int)mesh[i]].x;
+        	uvarray[i*2+1] = uvData[(int)mesh[i]].y;
         }
 
-        glGenBuffers (1, &points_vbo);
-        glBindBuffer (GL_ARRAY_BUFFER, points_vbo);
-        glBufferData (GL_ARRAY_BUFFER, mesh_indices * sizeof (GLfloat) * 3, vertices, GL_STATIC_DRAW);
+        texHelp = texturehelper("mountain.png");
 
-        glGenBuffers (1, &normals_vbo);
-		glBindBuffer (GL_ARRAY_BUFFER, normals_vbo);
-        glBufferData (GL_ARRAY_BUFFER, mesh_indices * sizeof (GLfloat) * 3, normals, GL_STATIC_DRAW);
-
-        glGenBuffers (1, &tex_vbo);
-		glBindBuffer (GL_ARRAY_BUFFER, tex_vbo);
-        glBufferData (GL_ARRAY_BUFFER, mesh_indices * sizeof (GLfloat) * 2, uvData, GL_STATIC_DRAW);
-
-        glGenVertexArrays (1, &vao);
-        glBindVertexArray (vao);
-        glBindBuffer (GL_ARRAY_BUFFER, points_vbo);
-        glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-        glBindBuffer (GL_ARRAY_BUFFER, normals_vbo);
-        glVertexAttribPointer (1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-        /*glBindBuffer (GL_ARRAY_BUFFER, tex_vbo);
-        glVertexAttribPointer (2, 2, GL_FLOAT, GL_FALSE, 0, NULL);*/
-
-
-        glBindTexture (GL_TEXTURE_2D, tex);
-
-
-        glEnableVertexAttribArray (0);
-        glEnableVertexAttribArray (1);
-        glEnableVertexAttribArray (2);
+        bufHelp = bufferhelper(3);
+        bufHelp.bind(0, mesh_indices * sizeof (GLfloat) * 3, vertices, 3);
+        bufHelp.bind(1, mesh_indices * sizeof (GLfloat) * 3, normals, 3);
+        bufHelp.bind(2, mesh_indices * sizeof (GLfloat) * 2, uvarray, 2);
 	}
 
 	void update(mat4 view_mat, GLfloat *proj_mat){
-		glUseProgram(shader);
-		glUniformMatrix4fv (proj_mat_location, 1, GL_FALSE, proj_mat);
-		
-		glUseProgram(shader);
-		glUniformMatrix4fv (view_mat_location, 1, GL_FALSE, view_mat.m);
-		
-		/*glUseProgram(shader);
-		glUniformMatrix4fv (mountain_location, 1, GL_FALSE, mountain_mat.m);*/
+		shader.use();
+		shader.bindLocationFloatarray(proj_mat, 2);
+		shader.bindLocationMat(view_mat, 0);
 	}
 
 	void draw(float delta, mat4 view_mat) {
-		glUseProgram(shader);
-		//mountain_location = glGetUniformLocation(shader, "unit");
-		//pos_z += delta;
-		//mat4 T = translate (identity_mat4 (), vec3 (0.5f, 0.5f, 0.5f));
 		mat4 mountain_m = translate (identity_mat4 (), vec3 (pos_x, pos_y, pos_z -400.0f));
-
-
-		//const float *pSource = (const float*)glm::value_ptr(pMat4);
-
-
-		glUniformMatrix4fv (mountain_location, 1, GL_FALSE, mountain_m.m);		
-		glUniformMatrix4fv (view_mat_location, 1, GL_FALSE, view_mat.m);
-
-		glBindTexture (GL_TEXTURE_2D, tex);
-
-		glBindVertexArray (vao);
-        glBindBuffer (GL_ARRAY_BUFFER, points_vbo);
-        glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-        glEnableVertexAttribArray (0);
-        glBindBuffer (GL_ARRAY_BUFFER, normals_vbo);
-        glVertexAttribPointer (1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-        glEnableVertexAttribArray (1);
-        glBindBuffer (GL_ARRAY_BUFFER, tex_vbo);
-        glVertexAttribPointer (2, 2, GL_FLOAT, GL_FALSE, 0, NULL);
-        glEnableVertexAttribArray (2);
+		
+		shader.use();
+		shader.bindLocationMat(mountain_m, 1);		
+		
+		texHelp.bind();
+		bufHelp.bindAll();
 
 		glDrawArrays (GL_TRIANGLES, 0, triangleCount);
 	}
 
+
+	//debug functions
 	void printMap() {
 		for(int i = 0; i < x; i++){
 			for(int j = 0; j < y; j++)
