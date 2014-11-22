@@ -15,7 +15,7 @@ class shaderhelper {
 
 	}
 
-	shaderhelper(const char* vs, const char* fs, int location_number){//, char* name = "basic_texture"){
+	shaderhelper(const char* vs, const char* fs, int location_number){
 		Nlocations = location_number;
 
 		shader = create_programme_from_files (

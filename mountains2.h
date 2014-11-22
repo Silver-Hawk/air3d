@@ -42,13 +42,6 @@ class mountain {
 
 		srand(time(0));
 
-		shader = shaderhelper ("mountain_vs.glsl", "mountain_fs.glsl", 3);
-		shader.use();
-
-		view_mat_location = shader.setLocation("view", 0);
-		mountain_location = shader.setLocation("unit", 1);
-		proj_mat_location = shader.setLocation("proj", 2);
-
 		//generate random heightmap
 		/*
 			Don't create heights on borders - set them to zero
@@ -132,6 +125,14 @@ class mountain {
         	uvarray[i*2+1] = uvData[(int)mesh[i]].y;
         }
 
+        //graphics related
+        shader = shaderhelper ("mountain_vs.glsl", "mountain_fs.glsl", 3);
+		shader.use();
+
+		shader.setLocation("view", 0);
+		shader.setLocation("unit", 1);
+		shader.setLocation("proj", 2);
+
         texHelp = texturehelper("mountain.png");
 
         bufHelp = bufferhelper(3);
@@ -150,12 +151,12 @@ class mountain {
 		mat4 mountain_m = translate (identity_mat4 (), vec3 (pos_x, pos_y, pos_z -400.0f));
 		
 		shader.use();
-		shader.bindLocationMat(mountain_m, 1);		
+		shader.bindLocationMat(mountain_m, 1);
 		
 		texHelp.bind();
 		bufHelp.bindAll();
 
-		glDrawArrays (GL_TRIANGLES, 0, triangleCount);
+		bufHelp.drawTriangles();//glDrawArrays (GL_TRIANGLES, 0, triangleCount);
 	}
 
 

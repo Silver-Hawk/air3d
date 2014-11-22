@@ -12,6 +12,8 @@ class bufferhelper {
 	int bufCount;
 	int *vecType; //contains information about what type of vectors is used
 
+	int firstIndexSize;
+
 	bufferhelper(){
 
 	}
@@ -33,6 +35,8 @@ class bufferhelper {
 		glBindBuffer (GL_ARRAY_BUFFER, buffers[buffer]);
         glBufferData (GL_ARRAY_BUFFER, size, array, GL_STATIC_DRAW);
         vecType[buffer] = type;
+        if(buffer == 0)
+        	firstIndexSize = size;
 	}
 
 	void bindAll(){
@@ -42,6 +46,10 @@ class bufferhelper {
         	glVertexAttribPointer (i, vecType[i], GL_FLOAT, GL_FALSE, 0, NULL);
         	glEnableVertexAttribArray (i); //enable them in shaders
 		}
+	}
+
+	void drawTriangles(){
+		glDrawArrays (GL_TRIANGLES, 0, firstIndexSize);
 	}
 	
 	void send(){

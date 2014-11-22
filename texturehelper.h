@@ -15,14 +15,14 @@ class texturehelper {
 
 	}
 
-	texturehelper(const char* text_string){//, char* name = "basic_texture"){
+	texturehelper(const char* text_string){
 		//get current shader
 		glGetIntegerv(GL_CURRENT_PROGRAM, &shader);
 
 		tex_location = glGetUniformLocation (shader, "basic_texture");
 
 		//might be needed
-		//glUniform1i (tex_location, 0);
+		glUniform1i (tex_location, 0);
 
 		glActiveTexture (GL_TEXTURE0);
 		assert (load_texture(text_string, &tex));

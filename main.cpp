@@ -27,7 +27,9 @@
 #include "background.h"
 #include "mountains2.h"
 #include "cam.h"
-
+#include "sprite.h"
+#include "angular.h"
+#include "bullet.h"
 
 // keep track of window size for things like the viewport and the mouse cursor
 int g_gl_width = 800;
@@ -45,9 +47,15 @@ int main () {
 	glFrontFace (GL_CCW); // set counter-clock-wise vertex order to mean the front
 	
 	//Enable blending
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable( GL_BLEND );
+	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	//glEnable( GL_BLEND );
+	
 	glEnable( GL_MULTISAMPLE );
+
+	//use alpha testing instead for depth buffering of alpha objects
+	//glEnable(GL10.GL_ALPHA_TEST);
+	glEnable(GL_ALPHA_TEST);
+	glAlphaFunc(GL_GREATER, 0);
 
 	glClearColor (0.2, 0.2, 0.2, 1.0); // grey background to help spot mistakes
 	glViewport (0, 0, g_gl_width, g_gl_height);
@@ -97,7 +105,6 @@ int main () {
 	glBindTexture (GL_TEXTURE_2D, monkey_tex);
 
 	cam camera = cam();
-	mat4 view_mat = camera.getViewMat(); 
 
 	//vec3 view_dir = view_mat * cam_pos;
 
@@ -120,6 +127,9 @@ int main () {
 		Units[i].setVao(monkey_vao, monkey_point_count);
 		Units[i].set_mat_location(unit_mat_location);
 	}
+
+	bullet* bullets = (bullet*) malloc(10000 * sizeof(bullet));
+	int numbullets = 0;
 
 	mountain Mo = mountain(128,128);
 
@@ -151,11 +161,36 @@ int main () {
 
 		Mo.draw(elapsed_seconds, camera.getViewMat());
 		glClear (GL_DEPTH_BUFFER_BIT);
+
 		
-		glUseProgram (shader_programme);
+		shaderhelper shader = shaderhelper ("shaders/bullet_vs.glsl", "shaders/bullet_fs.glsl", 2);
+		shader.use();
+		shader.setLocation("view", 0);
+		shader.setLocation("proj", 1);
+		shader.bindLocationFloatarray(camera.getViewMat().m, 0);
+		shader.bindLocationFloatarray(proj_mat, 1);
+
+		texturehelper bullettest = texturehelper("bullet.png");
+		bullettest.bind();
+
+
+
+
+		glUseProgram(shader_programme);
 		for(int i = 0; i < 20; i++)
 			Units[i].draw();
 		
+
+		shader.use();
+		sprite spritetest = sprite(bullettest, 3.0f);
+		spritetest.draw();
+
+		for(int i = 0; i < numbullets; i++){
+			bullets[i].update();
+			bullets[i].draw();
+		}
+
+		glUseProgram(shader_programme);		
 		// update other events like input handling 
 		glfwPollEvents ();
 		
@@ -185,6 +220,18 @@ int main () {
 			camera.setDeltaZ(elapsed_seconds);
 			cam_moved = true;
 		}
+
+		if (glfwGetKey (g_window, GLFW_KEY_SPACE)) {
+			bullets[numbullets] = bullet(spritetest, Units[0].getAngle(), Units[0].pos[0], Units[0].pos[1], 0.50f);
+			numbullets++;
+			bullets[numbullets] = bullet(spritetest, Units[0].getAngle()+45.0f, Units[0].pos[0], Units[0].pos[1], 0.50f);
+			numbullets++;
+			bullets[numbullets] = bullet(spritetest, Units[0].getAngle()-45.0f, Units[0].pos[0], Units[0].pos[1], 0.50f);
+			numbullets++;
+			if(numbullets > 9999)
+				numbullets = 0;
+		}
+
 
 		cam_moved = true;
 		camera.getViewMat();

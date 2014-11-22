@@ -60,9 +60,9 @@ public:
 	}
 
 	void setViewMatrix(mat4 view_mat) {
-		int back_view_location = glGetUniformLocation (background_shader, "proj");
+		/*int back_view_location = glGetUniformLocation (background_shader, "proj");
 		glUseProgram (background_shader);
-		glUniformMatrix4fv (back_view_location, 1, GL_FALSE, view_mat.m);
+		glUniformMatrix4fv (back_view_location, 1, GL_FALSE, view_mat.m);*/
 	}
 
 	void draw() {

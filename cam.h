@@ -41,7 +41,6 @@ public:
 
 	void setDeltaZ(float n){
 		cam_pos[2] += cam_speed * n;
-		printf("Cam pos[2] = %f, and n is %i\n", cam_pos[2]);
 	}
 
 
