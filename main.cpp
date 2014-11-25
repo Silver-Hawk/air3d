@@ -30,6 +30,7 @@
 #include "sprite.h"
 #include "angular.h"
 #include "bullet.h"
+#include "bulletController.h"
 
 // keep track of window size for things like the viewport and the mouse cursor
 int g_gl_width = 800;
@@ -71,25 +72,6 @@ int main () {
 		VERTEX_SHADER_FILE, FRAGMENT_SHADER_FILE
 	);
 	
-	#define ONE_DEG_IN_RAD (2.0 * M_PI) / 360.0 // 0.017444444
-	// input variables
-	float near = 0.1f; // clipping plane
-	float far = 1200.0f; // clipping plane
-	float fov = 67.0f * ONE_DEG_IN_RAD; // convert 67 degrees to radians
-	float aspect = (float)g_gl_width / (float)g_gl_height; // aspect ratio
-	// matrix components
-	float range = tan (fov * 0.5f) * near;
-	float Sx = (2.0f * near) / (range * aspect + range * aspect);
-	float Sy = near / range;
-	float Sz = -(far + near) / (far - near);
-	float Pz = -(2.0f * far * near) / (far - near);
-	GLfloat proj_mat[] = {
-		Sx, 0.0f, 0.0f, 0.0f,
-		0.0f, Sy, 0.0f, 0.0f,
-		0.0f, 0.0f, Sz, -1.0f,
-		0.0f, 0.0f, Pz, 0.0f
-	};
-
 	/* shader background */
 	background bg = background("background_vs.glsl", "background_fs.glsl");
 	
@@ -114,7 +96,13 @@ int main () {
 
 	int proj_mat_location = glGetUniformLocation (shader_programme, "proj");
 	glUseProgram (shader_programme);
-	glUniformMatrix4fv (proj_mat_location, 1, GL_FALSE, proj_mat);
+
+
+	//proj_mat = camera.getProjMat();
+	for(int i = 0; i < 16 ; i ++){
+		printf("Cam get[%i] %f\n", i, camera.getProjMat()[i]);		
+	}
+	glUniformMatrix4fv (proj_mat_location, 1, GL_FALSE, camera.getProjMat());
 	
 	int unit_mat_location = glGetUniformLocation (shader_programme, "unit");
 	
@@ -128,8 +116,9 @@ int main () {
 		Units[i].set_mat_location(unit_mat_location);
 	}
 
-	bullet* bullets = (bullet*) malloc(10000 * sizeof(bullet));
 	int numbullets = 0;
+	int maxBullets = 5000000;
+	bullet* bullets = (bullet*) malloc(maxBullets * sizeof(bullet));
 
 	mountain Mo = mountain(128,128);
 
@@ -168,13 +157,10 @@ int main () {
 		shader.setLocation("view", 0);
 		shader.setLocation("proj", 1);
 		shader.bindLocationFloatarray(camera.getViewMat().m, 0);
-		shader.bindLocationFloatarray(proj_mat, 1);
+		shader.bindLocationFloatarray(camera.getProjMat(), 1);
 
 		texturehelper bullettest = texturehelper("bullet.png");
 		bullettest.bind();
-
-
-
 
 		glUseProgram(shader_programme);
 		for(int i = 0; i < 20; i++)
@@ -185,9 +171,16 @@ int main () {
 		sprite spritetest = sprite(bullettest, 3.0f);
 		spritetest.draw();
 
+		if(numbullets > 0)
+			bullets[0].s.bind();
+
+		camera.calculateFrustum();
 		for(int i = 0; i < numbullets; i++){
 			bullets[i].update();
-			bullets[i].draw();
+			if(camera.PointInFrustum(bullets[i].a.getX(), bullets[i].a.getY(), 0.0f)){
+				bullets[i].draw();
+				//glDrawArrays (GL_TRIANGLES, 0, 6);
+			}
 		}
 
 		glUseProgram(shader_programme);		
@@ -222,21 +215,24 @@ int main () {
 		}
 
 		if (glfwGetKey (g_window, GLFW_KEY_SPACE)) {
-			bullets[numbullets] = bullet(spritetest, Units[0].getAngle(), Units[0].pos[0], Units[0].pos[1], 0.50f);
-			numbullets++;
-			bullets[numbullets] = bullet(spritetest, Units[0].getAngle()+45.0f, Units[0].pos[0], Units[0].pos[1], 0.50f);
-			numbullets++;
-			bullets[numbullets] = bullet(spritetest, Units[0].getAngle()-45.0f, Units[0].pos[0], Units[0].pos[1], 0.50f);
-			numbullets++;
-			if(numbullets > 9999)
+			float displacement = 5.481503f;
+			float dx = cos(ONE_DEG_IN_RAD * Units[0].getAngle());
+			float dy = sin(ONE_DEG_IN_RAD * Units[0].getAngle());
+			for(int i=0;i<150;i++){
+				bullets[numbullets] = bullet(spritetest, -30.0f + Units[0].getAngle() + i*(15.0f), Units[0].pos[0] + (displacement * dx) + Units[0].velocity.x, Units[0].pos[1] + (displacement * dy) + Units[0].velocity.y, 15.0f+(i/10.0f));
+				bullets[numbullets].addPlaneSpeed(Units[0].velocity.x, Units[0].velocity.y);
+				numbullets++;
+			}
+			if(numbullets > maxBullets)
 				numbullets = 0;
+
+			printf("numbullets %i\n", numbullets);
 		}
 
 
 		cam_moved = true;
 		camera.getViewMat();
 	
-		
 		for(int i=0; i<19; i++)
 			enemytest[i].update(elapsed_seconds);
 		playertest.update(elapsed_seconds);
@@ -249,7 +245,7 @@ int main () {
 			mat4 view_mat = camera.getViewMat();
 			glUniformMatrix4fv (view_mat_location, 1, GL_FALSE, view_mat.m);
 			bg.setViewMatrix(view_mat);
-			Mo.update(view_mat, proj_mat);
+			Mo.update(view_mat, camera.getProjMat());
 		}
 		
 		if (GLFW_PRESS == glfwGetKey (g_window, GLFW_KEY_ESCAPE)) {

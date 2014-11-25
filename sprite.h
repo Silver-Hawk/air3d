@@ -76,9 +76,13 @@ class sprite {
 
 	}
 
+    void bind(){
+        texHelp.bind();
+        bufHelp.bindAll();
+    }
+
 	void draw(){
-		texHelp.bind();
-		bufHelp.bindAll();
+        bind();
 
 		glDrawArrays (GL_TRIANGLES, 0, 6);
 	}
