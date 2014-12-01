@@ -21,6 +21,8 @@ class bullet {
 
 	bool firstDraw;
 
+	int debugId;
+
 	bullet(sprite spr, float angle, float x, float y, float speed){
 		a = angular();
 		a.setPos(x, y, 0.0f);
@@ -31,11 +33,35 @@ class bullet {
 		xspeed = speed * cos(DEG_TO_RAD * angle);
 		yspeed = speed * sin(DEG_TO_RAD * angle);
 		firstDraw = false;
+
+		prev = NULL;
+		next = NULL;
+	}
+
+	bullet(sprite spr, float angle, float x, float y, float speed, int id){
+		a = angular();
+		a.setPos(x, y, 0.0f);
+		a.setAngle(angle);
+
+		this->speed = speed;
+		s = spr;
+		xspeed = speed * cos(DEG_TO_RAD * angle);
+		yspeed = speed * sin(DEG_TO_RAD * angle);
+		firstDraw = false;
+
+		prev = NULL;
+		next = NULL;
+
+		debugId = id;
 	}
 
 	void addPlaneSpeed(float dx, float dy){
 		xspeed += dx;
 		yspeed += dy;
+	}
+
+	angular getPos(){
+		return a;
 	}
 
 	void setNext(bullet *b){
@@ -48,8 +74,10 @@ class bullet {
 
 	void destroy(){
 		//update list
-		next->prev = prev;
-		prev->next = next;
+		if(next)
+			next->prev = prev;
+		if(prev)
+			prev->next = next;
 
 		free(this);
 	}

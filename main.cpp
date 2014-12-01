@@ -18,6 +18,15 @@
 
 //Game classes
 #include "helpers.h"
+#include "worldController.h"
+
+//world controller needs to be visible for all
+worldController WC;
+
+int* getWorldBounds(){
+	return WC.getBoundsArray();
+}
+
 #include "bufferHelper.h"
 #include "texturehelper.h"
 #include "bvec.h"
@@ -40,6 +49,9 @@ GLFWwindow* g_window = NULL;
 int main () {
 	assert (restart_gl_log ());
 	assert (start_gl ());
+
+	WC = worldController(-2000, 0, 2000, 5000);
+	bulletController BC = bulletController();
 
 	glEnable (GL_DEPTH_TEST); // enable depth-testing
 	glDepthFunc (GL_LESS); // depth-testing interprets a smaller value as "closer"
@@ -80,15 +92,12 @@ int main () {
 	assert (tex_location > -1);
 
 	/* tricky bit here - remember to set second sampler to use slot 1 */
-	
 	GLuint monkey_tex;
 	glActiveTexture (GL_TEXTURE0);
 	assert (load_texture("AudioEquipment0039_2_S.jpg", &monkey_tex));
 	glBindTexture (GL_TEXTURE_2D, monkey_tex);
 
 	cam camera = cam();
-
-	//vec3 view_dir = view_mat * cam_pos;
 
 	int view_mat_location = glGetUniformLocation (shader_programme, "view");
 	glUseProgram (shader_programme);
@@ -97,11 +106,6 @@ int main () {
 	int proj_mat_location = glGetUniformLocation (shader_programme, "proj");
 	glUseProgram (shader_programme);
 
-
-	//proj_mat = camera.getProjMat();
-	for(int i = 0; i < 16 ; i ++){
-		printf("Cam get[%i] %f\n", i, camera.getProjMat()[i]);		
-	}
 	glUniformMatrix4fv (proj_mat_location, 1, GL_FALSE, camera.getProjMat());
 	
 	int unit_mat_location = glGetUniformLocation (shader_programme, "unit");
@@ -116,13 +120,11 @@ int main () {
 		Units[i].set_mat_location(unit_mat_location);
 	}
 
-	int numbullets = 0;
-	int maxBullets = 5000000;
-	bullet* bullets = (bullet*) malloc(maxBullets * sizeof(bullet));
-
 	mountain Mo = mountain(128,128);
+	
 
-	Units[1].setRotationSpeed(180.0f);
+	Units[1].setRotationSpeed(30.0f);
+
 
 	enemy *enemytest = (enemy*) malloc(19 * sizeof(enemy));
 
@@ -131,8 +133,11 @@ int main () {
 		enemytest[i].setTarget(&Units[0]);
 	}
 
-	player playertest = player(GLFW_KEY_LEFT, GLFW_KEY_RIGHT, GLFW_KEY_UP, &Units[0]);
 
+	camera.setFollow(0, &Units[0]);
+	camera.setFollow(1, &Units[1]);
+
+	player playertest = player(GLFW_KEY_LEFT, GLFW_KEY_RIGHT, GLFW_KEY_UP, &Units[0]);
 
 	while (!glfwWindowShouldClose (g_window)) {
 		static double previous_seconds = glfwGetTime ();
@@ -145,6 +150,9 @@ int main () {
 		glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glViewport (0, 0, g_gl_width, g_gl_height);
 		
+		camera.setFollow(0, &Units[0]);
+		camera.setFollow(1, &Units[1]);
+
 		bg.draw();
 		glClear (GL_DEPTH_BUFFER_BIT);
 
@@ -171,18 +179,11 @@ int main () {
 		sprite spritetest = sprite(bullettest, 3.0f);
 		spritetest.draw();
 
-		if(numbullets > 0)
-			bullets[0].s.bind();
-
 		camera.calculateFrustum();
-		for(int i = 0; i < numbullets; i++){
-			bullets[i].update();
-			if(camera.PointInFrustum(bullets[i].a.getX(), bullets[i].a.getY(), 0.0f)){
-				bullets[i].draw();
-				//glDrawArrays (GL_TRIANGLES, 0, 6);
-			}
-		}
 
+		BC.update();
+		BC.draw(camera);
+		
 		glUseProgram(shader_programme);		
 		// update other events like input handling 
 		glfwPollEvents ();
@@ -218,17 +219,27 @@ int main () {
 			float displacement = 5.481503f;
 			float dx = cos(ONE_DEG_IN_RAD * Units[0].getAngle());
 			float dy = sin(ONE_DEG_IN_RAD * Units[0].getAngle());
-			for(int i=0;i<150;i++){
-				bullets[numbullets] = bullet(spritetest, -30.0f + Units[0].getAngle() + i*(15.0f), Units[0].pos[0] + (displacement * dx) + Units[0].velocity.x, Units[0].pos[1] + (displacement * dy) + Units[0].velocity.y, 15.0f+(i/10.0f));
-				bullets[numbullets].addPlaneSpeed(Units[0].velocity.x, Units[0].velocity.y);
-				numbullets++;
+			int num_bullets = 100;
+			for(int i=0;i<num_bullets;i++){
+				float splitAngle, diffAngle;
+				int extradiff;
+				if(num_bullets%2 == 0){
+					splitAngle = 30.0f/2;
+					diffAngle = splitAngle / ((float) num_bullets);
+					extradiff = 0; 
+				}
+				else
+				{
+					splitAngle = 30.0f/2.0f;
+					diffAngle = splitAngle / ((float) num_bullets);
+					extradiff = 1;
+				}
+
+				BC.add(new bullet(spritetest, -splitAngle + Units[0].getAngle() + (diffAngle*(i+extradiff)), Units[0].pos[0] + (displacement * dx) + Units[0].velocity.x,
+			    Units[0].pos[1] + (displacement * dy) + Units[0].velocity.y, 5.0f, i));
+				BC.last->addPlaneSpeed(Units[0].velocity.x, Units[0].velocity.y);
 			}
-			if(numbullets > maxBullets)
-				numbullets = 0;
-
-			printf("numbullets %i\n", numbullets);
 		}
-
 
 		cam_moved = true;
 		camera.getViewMat();
@@ -237,8 +248,11 @@ int main () {
 			enemytest[i].update(elapsed_seconds);
 		playertest.update(elapsed_seconds);
 		
-		camera.setX(Units[0].get2Dpos().x);
-		camera.setY(Units[0].get2Dpos().y);
+		//camera.setX(Units[0].get2Dpos().x);
+		//camera.setY(Units[0].get2Dpos().y);
+		printf("2dPos is : %f \n",Units[0].get2Dpos()->x);
+		printf("2dPos is : %f \n",Units[1].get2Dpos()->x);
+		camera.updateFollow();
 
 		// update view matrix
 		if (cam_moved) {

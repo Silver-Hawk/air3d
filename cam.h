@@ -13,6 +13,10 @@ public:
 	float cam_yaw; // y-rotation in degrees
 	GLfloat *proj_mat;
 
+	unit *following[4];
+	bool followEnabled[4];
+
+
 	//frustum culling
 	float frustum[6][4];
 
@@ -31,7 +35,7 @@ public:
 		//Projection matrix
 		// input variables
 		float near = 0.1f; // clipping plane
-		float far = 1200.0f; // clipping plane
+		float far = 2400.0f; // clipping plane
 		float fov = 67.0f * ONE_DEG_IN_RAD; // convert 67 degrees to radians
 		float aspect = (float)g_gl_width / (float)g_gl_height; // aspect ratio
 		// matrix components
@@ -71,6 +75,62 @@ public:
 
 	void setDeltaZ(float n){
 		cam_pos[2] += cam_speed * n;
+	}
+
+	void disableFollow(int disable){
+
+	}
+
+	void setFollow(int follow, unit *pointer){
+		followEnabled[follow] = true;
+		following[follow] = pointer;
+	}
+
+	void updateFollow(){
+		int followers = 0;
+		float followx = 0.0f, followy = 0.0f;
+		for(int i = 0; i < 4; i++){
+			if(followEnabled[i]){
+				followers++;
+				followx += following[i]->get2Dpos()->x;
+				followy += following[i]->get2Dpos()->y;
+
+				printf("pos x = %f\n", following[i]->pos[0]);
+
+				printf("[%i] followx %f \n",i, followx);
+				printf("[%i] followy %f \n",i, followy);
+			}
+		}
+
+		printf("followers %i\n", followers);
+
+		followx /= followers;
+		followy /= followers;
+		setX(followx);
+		setY(followy);
+
+
+		float maxDistance = 0;
+		bvec2<float>* last = NULL;
+		if(followers > 1){
+			for(int i = 0; i < 4; i++){
+				if(followEnabled[i]){
+					if(maxDistance == 0){
+						last = (following[i]->get2Dpos());
+						maxDistance = -1;
+						continue;
+					}
+					else
+					{
+						printf("dist : %f\n",  following[i]->get2Dpos()->dist(*last));
+						maxDistance = std::max(maxDistance, following[i]->get2Dpos()->dist(*last));
+					}
+				}
+			}
+		}
+
+		printf("maxDistance %f\n", maxDistance/0.75f);
+		setZ(std::max((maxDistance/0.75f),(120.0f)));
 	}
 
 

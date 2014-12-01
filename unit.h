@@ -120,8 +120,8 @@ public:
 		return angle; 
 	}
 
-	bvec2<float> get2Dpos(){
-		return bvec2<float> (pos[0], pos[1]);
+	bvec2<float>* get2Dpos(){
+		return (new bvec2<float> (pos[0], pos[1]));
 	}
 
 	void addVelocity(float delta){

@@ -38,8 +38,8 @@ public:
 
 	//MOVEMENT BEHAVIORS
 	bvec2<float> seeking() {
-		bvec2<float>targetdir = target->get2Dpos();
-		bvec2<float>selfdir = self->get2Dpos();
+		bvec2<float>targetdir = *(target->get2Dpos());
+		bvec2<float>selfdir = *(self->get2Dpos());
 		bvec2<float>dir = targetdir - selfdir; 
 		dir.normalize();
 		SPEED_SETUP = SPEED_MAX;
@@ -52,7 +52,7 @@ public:
 		self->alignAngle(delta, atan2(steer.y, steer.x)*57.2957795+(plusr-minusr));
 		
 		if(SPEED_SETUP == SPEED_MAX){
-			self->addVelocity(0.2f * delta);
+			self->addVelocity(0.1f * delta);
 		}
 
 		self->applyVelocity();
