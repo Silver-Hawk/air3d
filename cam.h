@@ -4,6 +4,8 @@
 #include <vector>
 #define GLM_FORCE_RADIANS
 #include "glm/gtc/type_ptr.hpp"
+// glm::translate, glm::rotate, glm::scale
+#include "glm/gtc/matrix_transform.hpp"
 
 class cam {
 public:
@@ -73,6 +75,10 @@ public:
 		cam_pos[2] = n;
 	}
 
+	float getY(){
+		return cam_pos[1];
+	}
+
 	void setDeltaZ(float n){
 		cam_pos[2] += cam_speed * n;
 	}
@@ -95,14 +101,14 @@ public:
 				followx += following[i]->get2Dpos()->x;
 				followy += following[i]->get2Dpos()->y;
 
-				printf("pos x = %f\n", following[i]->pos[0]);
+				//printf("pos x = %f\n", following[i]->pos[0]);
 
-				printf("[%i] followx %f \n",i, followx);
-				printf("[%i] followy %f \n",i, followy);
+				//printf("[%i] followx %f \n",i, followx);
+				//printf("[%i] followy %f \n",i, followy);
 			}
 		}
 
-		printf("followers %i\n", followers);
+		//printf("followers %i\n", followers);
 
 		followx /= followers;
 		followy /= followers;
@@ -122,15 +128,20 @@ public:
 					}
 					else
 					{
-						printf("dist : %f\n",  following[i]->get2Dpos()->dist(*last));
+						//printf("dist : %f\n",  following[i]->get2Dpos()->dist(*last));
 						maxDistance = std::max(maxDistance, following[i]->get2Dpos()->dist(*last));
 					}
 				}
 			}
 		}
 
-		printf("maxDistance %f\n", maxDistance/0.75f);
+		//printf("maxDistance %f\n", maxDistance/0.75f);
 		setZ(std::max((maxDistance/0.75f),(120.0f)));
+
+		if(getY() < 0.0f)
+			setY(0.0f);
+
+		printf("cam y is %f\n", getY());
 	}
 
 
@@ -140,6 +151,10 @@ public:
 		//mat4 view_mat = R * T;
 
 		return R * T;
+	}
+
+	void inverseProjMatOnY(){
+		proj_mat[5] *= -1;
 	}
 
 	GLfloat* getProjMat(){

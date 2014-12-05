@@ -125,6 +125,9 @@ class mountain {
         	uvarray[i*2+1] = uvData[(int)mesh[i]].y;
         }
 
+        //
+        pos_y = 0.0f;
+
         //graphics related
         shader = shaderhelper ("mountain_vs.glsl", "mountain_fs.glsl", 3);
 		shader.use();
@@ -156,7 +159,11 @@ class mountain {
 		texHelp.bind();
 		bufHelp.bindAll();
 
-		bufHelp.drawTriangles();//glDrawArrays (GL_TRIANGLES, 0, triangleCount);
+		bufHelp.drawTriangles();
+
+		/*mountain_m = scale(mountain_m, vec3 (1.0f, -1.0f, 1.0f));
+		shader.bindLocationMat(mountain_m, 1);
+		bufHelp.drawTriangles();*/
 	}
 
 

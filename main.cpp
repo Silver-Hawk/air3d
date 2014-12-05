@@ -40,6 +40,7 @@ int* getWorldBounds(){
 #include "angular.h"
 #include "bullet.h"
 #include "bulletController.h"
+#include "water.h"
 
 // keep track of window size for things like the viewport and the mouse cursor
 int g_gl_width = 800;
@@ -133,6 +134,8 @@ int main () {
 		enemytest[i].setTarget(&Units[0]);
 	}
 
+	water W = water();
+	W.update(camera.getViewMat(), camera.getProjMat());
 
 	camera.setFollow(0, &Units[0]);
 	camera.setFollow(1, &Units[1]);
@@ -146,20 +149,17 @@ int main () {
 		previous_seconds = current_seconds;
 
 		_update_fps_counter (g_window);
-		// wipe the drawing surface clear
-		glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glViewport (0, 0, g_gl_width, g_gl_height);
 		
-		camera.setFollow(0, &Units[0]);
-		camera.setFollow(1, &Units[1]);
+		//calculate actions
+		// update other events like input handling 
+		glfwPollEvents ();
 
-		bg.draw();
-		glClear (GL_DEPTH_BUFFER_BIT);
-
-		Mo.draw(elapsed_seconds, camera.getViewMat());
-		glClear (GL_DEPTH_BUFFER_BIT);
-
+		for(int i=0; i<19; i++)
+			enemytest[i].update(elapsed_seconds);
+		playertest.update(elapsed_seconds);
 		
+		camera.updateFollow();
+
 		shaderhelper shader = shaderhelper ("shaders/bullet_vs.glsl", "shaders/bullet_fs.glsl", 2);
 		shader.use();
 		shader.setLocation("view", 0);
@@ -170,50 +170,10 @@ int main () {
 		texturehelper bullettest = texturehelper("bullet.png");
 		bullettest.bind();
 
-		glUseProgram(shader_programme);
-		for(int i = 0; i < 20; i++)
-			Units[i].draw();
-		
-
 		shader.use();
 		sprite spritetest = sprite(bullettest, 3.0f);
 		spritetest.draw();
 
-		camera.calculateFrustum();
-
-		BC.update();
-		BC.draw(camera);
-		
-		glUseProgram(shader_programme);		
-		// update other events like input handling 
-		glfwPollEvents ();
-		
-		// control keys
-		bool cam_moved = false;
-		if (glfwGetKey (g_window, GLFW_KEY_A)) {
-			//cam_pos[0] -= cam_speed * elapsed_seconds;
-			cam_moved = true;
-		}
-		if (glfwGetKey (g_window, GLFW_KEY_D)) {
-			//cam_pos[0] += cam_speed * elapsed_seconds;
-			cam_moved = true;
-		}
-		if (glfwGetKey (g_window, GLFW_KEY_PAGE_UP)) {
-			//cam_pos[1] += cam_speed * elapsed_seconds;
-			cam_moved = true;
-		}
-		if (glfwGetKey (g_window, GLFW_KEY_PAGE_DOWN)) {
-			//cam_pos[1] -= cam_speed * elapsed_seconds;
-			cam_moved = true;
-		}
-		if (glfwGetKey (g_window, GLFW_KEY_W)) {
-			camera.setDeltaZ(-elapsed_seconds);
-			cam_moved = true;
-		}
-		if (glfwGetKey (g_window, GLFW_KEY_S)) {
-			camera.setDeltaZ(elapsed_seconds);
-			cam_moved = true;
-		}
 
 		if (glfwGetKey (g_window, GLFW_KEY_SPACE)) {
 			float displacement = 5.481503f;
@@ -241,30 +201,77 @@ int main () {
 			}
 		}
 
-		cam_moved = true;
-		camera.getViewMat();
-	
-		for(int i=0; i<19; i++)
-			enemytest[i].update(elapsed_seconds);
-		playertest.update(elapsed_seconds);
-		
-		//camera.setX(Units[0].get2Dpos().x);
-		//camera.setY(Units[0].get2Dpos().y);
-		printf("2dPos is : %f \n",Units[0].get2Dpos()->x);
-		printf("2dPos is : %f \n",Units[1].get2Dpos()->x);
-		camera.updateFollow();
+		//DRAWING
+		// wipe the drawing surface clear
+		glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glViewport (0, 0, g_gl_width, g_gl_height);
 
-		// update view matrix
-		if (cam_moved) {
+		//calculate view frustum
+		camera.calculateFrustum();
+		
+		bg.draw();
+		glClear (GL_DEPTH_BUFFER_BIT);
+
+		for(int i = 0; i < 2; i++){
+			// update view matrix
 			mat4 view_mat = camera.getViewMat();
 			glUniformMatrix4fv (view_mat_location, 1, GL_FALSE, view_mat.m);
+			
+			if(i%2 == 1){
+				glFrontFace (GL_CCW);
+				glEnable(GL_DEPTH_TEST);
+				glDisable(GL_STENCIL_TEST);
+				camera.inverseProjMatOnY(); //enable when  the floor is made
+			}
+			else
+			{
+			    glFrontFace (GL_CW);
+
+				glDisable(GL_DEPTH_TEST);			
+				//enable stencil testing
+				glEnable(GL_STENCIL_TEST);
+				glStencilFunc(GL_ALWAYS, 1, 0xFF); // Set any stencil to 1
+			    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+			    glStencilMask(0xFF); // Write to stencil buffer
+			    glDepthMask(GL_FALSE); // Don't write to depth buffer
+			    glClear(GL_STENCIL_BUFFER_BIT); // Clear stencil buffer (0 by default)
+				
+			    //draw water
+			    W.update(camera.getViewMat(), camera.getProjMat());
+			    W.draw();
+
+				glStencilFunc(GL_EQUAL, 1, 0xFF); // Pass test if stencil value is 1
+			    glStencilMask(0x00); // Don't write anything to stencil buffer
+			    glDepthMask(GL_TRUE); // Write to depth buffer
+				camera.inverseProjMatOnY(); //enable when  the floor is made
+			}
+
+
 			bg.setViewMatrix(view_mat);
 			Mo.update(view_mat, camera.getProjMat());
+			
+			
+			Mo.draw(elapsed_seconds, camera.getViewMat());
+			
+			glUseProgram (shader_programme);
+			glUniformMatrix4fv (proj_mat_location, 1, GL_FALSE, camera.getProjMat());
+	
+			for(int i = 0; i < 20; i++)
+				Units[i].draw();
+			
+			shader.use();
+			BC.update();
+			BC.draw(camera);
+			
+			glUseProgram(shader_programme);		
+			
+			
+			if (GLFW_PRESS == glfwGetKey (g_window, GLFW_KEY_ESCAPE)) {
+				glfwSetWindowShouldClose (g_window, 1);
+			}
+
 		}
 		
-		if (GLFW_PRESS == glfwGetKey (g_window, GLFW_KEY_ESCAPE)) {
-			glfwSetWindowShouldClose (g_window, 1);
-		}
 		// put the stuff we've been drawing onto the display
 		glfwSwapBuffers (g_window);
 	}

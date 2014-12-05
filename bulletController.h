@@ -37,7 +37,7 @@ public:
 
 	void update(){
 		int count = 0;
-		printf("bullet_count %i\n", bullet_count);
+		//printf("bullet_count %i\n", bullet_count);
 		if(start){
 			int *bounds = getWorldBounds();
 			bullet* b = start;
@@ -58,10 +58,10 @@ public:
 					if(start == b)
 						if(b->next)
 							start = b->next;
-					printf("wow\n" );
+					//printf("wow\n" );
 					b->destroy();
 
-					printf("wow2\n");
+					//printf("wow2\n");
 					b = tmp;
 				}
 				else

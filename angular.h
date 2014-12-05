@@ -17,6 +17,8 @@ class angular {
 		middle_pos[0] = 0.5f;
 		middle_pos[1] = 0.5f;
 		middle_pos[2] = 0.0f;
+
+		angle = 0.0f;
 	}
 
 	void setAngle (float angle) { this->angle = angle; }
