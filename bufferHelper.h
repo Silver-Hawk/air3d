@@ -48,6 +48,21 @@ class bufferhelper {
 		}
 	}
 
+	void loadModel(const char *model){
+		assert (load_mesh (model, &vao, &firstIndexSize));
+	}
+
+	void bindModel(){
+		glBindBuffer (GL_ARRAY_BUFFER, vao);
+		glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+		glEnableVertexAttribArray (0);
+		glBindVertexArray (vao);
+	}
+
+	void drawArrays(){
+		glDrawArrays (GL_TRIANGLES, 0, firstIndexSize);
+	}
+
 	void drawTriangles(){
 		glDrawArrays (GL_TRIANGLES, 0, firstIndexSize);
 	}

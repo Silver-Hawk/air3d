@@ -141,7 +141,6 @@ public:
 		if(getY() < 0.0f)
 			setY(0.0f);
 
-		printf("cam y is %f\n", getY());
 	}
 
 

@@ -17,13 +17,11 @@ class shaderhelper {
 
 	shaderhelper(const char* vs, const char* fs, int location_number){
 		Nlocations = location_number;
-
 		shader = create_programme_from_files (
 			vs, fs
 		);
 
 		locations = (int*) malloc(sizeof(int) * location_number);
-
 	}
 
 	int setLocation(const char* name, int index){
@@ -39,6 +37,10 @@ class shaderhelper {
 
 	void bindLocationFloatarray(GLfloat* array, int index){
 		glUniformMatrix4fv (locations[index], 1, GL_FALSE, array);
+	}
+
+	void bindLocationVec3Floatarray(GLfloat* vec, int index){
+		glUniform3fv(locations[index], 1, vec);
 	}
 
 	void use(){

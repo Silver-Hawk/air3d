@@ -27,6 +27,10 @@ int* getWorldBounds(){
 	return WC.getBoundsArray();
 }
 
+//make shader controller visible
+#include "shadercontroller.h"
+shadercontroller* SC;
+
 #include "bufferHelper.h"
 #include "texturehelper.h"
 #include "bvec.h"
@@ -51,8 +55,11 @@ int main () {
 	assert (restart_gl_log ());
 	assert (start_gl ());
 
+	//game controllers
+	//set world bounds
 	WC = worldController(-2000, 0, 2000, 5000);
 	bulletController BC = bulletController();
+	SC = new shadercontroller();
 
 	glEnable (GL_DEPTH_TEST); // enable depth-testing
 	glDepthFunc (GL_LESS); // depth-testing interprets a smaller value as "closer"
@@ -74,33 +81,38 @@ int main () {
 	glClearColor (0.2, 0.2, 0.2, 1.0); // grey background to help spot mistakes
 	glViewport (0, 0, g_gl_width, g_gl_height);
 
-	/* load the mesh using assimp */
-	GLuint monkey_vao;
+	/*GLuint monkey_vao;
 	int monkey_point_count = 0;
-	assert (load_mesh (MESH_FILE, &monkey_vao, &monkey_point_count));
+	assert (load_mesh (MESH_FILE, &monkey_vao, &monkey_point_count));*/
 
 	
 /*-------------------------------CREATE SHADERS-------------------------------*/
-	GLuint shader_programme = create_programme_from_files (
+	/*GLuint shader_programme = create_programme_from_files (
 		VERTEX_SHADER_FILE, FRAGMENT_SHADER_FILE
-	);
+	);*/
 	
 	/* shader background */
 	background bg = background("background_vs.glsl", "background_fs.glsl");
 	
 	/* tex test */
-	int tex_location = glGetUniformLocation (shader_programme, "basic_texture");
+	/* load the mesh using assimp */
+	SC->use(UNIT_SHADER);
+	bufferhelper *unitBuf = new bufferhelper();
+	unitBuf->loadModel(MESH_FILE);
+	texturehelper unitTex = texturehelper("AudioEquipment0039_2_S.jpg");
+
+	/*int tex_location = glGetUniformLocation (shader_programme, "basic_texture");
 	assert (tex_location > -1);
 
-	/* tricky bit here - remember to set second sampler to use slot 1 */
+	tricky bit here - remember to set second sampler to use slot 1 
 	GLuint monkey_tex;
 	glActiveTexture (GL_TEXTURE0);
 	assert (load_texture("AudioEquipment0039_2_S.jpg", &monkey_tex));
-	glBindTexture (GL_TEXTURE_2D, monkey_tex);
+	glBindTexture (GL_TEXTURE_2D, monkey_tex);*/
 
 	cam camera = cam();
 
-	int view_mat_location = glGetUniformLocation (shader_programme, "view");
+	/*int view_mat_location = glGetUniformLocation (shader_programme, "view");
 	glUseProgram (shader_programme);
 	glUniformMatrix4fv (view_mat_location, 1, GL_FALSE, camera.getViewMat().m);
 
@@ -109,17 +121,18 @@ int main () {
 
 	glUniformMatrix4fv (proj_mat_location, 1, GL_FALSE, camera.getProjMat());
 	
-	int unit_mat_location = glGetUniformLocation (shader_programme, "unit");
+	int unit_mat_location = glGetUniformLocation (shader_programme, "unit");*/
 	
 	//test unit class
 	unit *Units = (unit*) malloc(20 * sizeof(unit));
 	
 	for(int i=0;i<20;i++){
 		Units[i] = unit(i*10.0f,fmod(i*10.0f, 50.f),0.0f);
-		Units[i].setTex(monkey_tex);
+		/*Units[i].setTex(monkey_tex);
 		Units[i].setVao(monkey_vao, monkey_point_count);
-		Units[i].set_mat_location(unit_mat_location);
+		Units[i].set_mat_location(unit_mat_location);*/
 	}
+
 
 	mountain Mo = mountain(128,128);
 	
@@ -138,7 +151,7 @@ int main () {
 	W.update(camera.getViewMat(), camera.getProjMat());
 
 	camera.setFollow(0, &Units[0]);
-	camera.setFollow(1, &Units[1]);
+	//camera.setFollow(1, &Units[1]);
 
 	player playertest = player(GLFW_KEY_LEFT, GLFW_KEY_RIGHT, GLFW_KEY_UP, &Units[0]);
 
@@ -160,6 +173,8 @@ int main () {
 		
 		camera.updateFollow();
 
+		SC->updateShaders(camera.getViewMat(), camera.getProjMat(), true);
+		
 		shaderhelper shader = shaderhelper ("shaders/bullet_vs.glsl", "shaders/bullet_fs.glsl", 2);
 		shader.use();
 		shader.setLocation("view", 0);
@@ -173,6 +188,9 @@ int main () {
 		shader.use();
 		sprite spritetest = sprite(bullettest, 3.0f);
 		spritetest.draw();
+
+
+		BC.update();
 
 
 		if (glfwGetKey (g_window, GLFW_KEY_SPACE)) {
@@ -214,19 +232,34 @@ int main () {
 
 		for(int i = 0; i < 2; i++){
 			// update view matrix
+
 			mat4 view_mat = camera.getViewMat();
-			glUniformMatrix4fv (view_mat_location, 1, GL_FALSE, view_mat.m);
+			//glUniformMatrix4fv (view_mat_location, 1, GL_FALSE, view_mat.m);
 			
 			if(i%2 == 1){
-				glFrontFace (GL_CCW);
-				glEnable(GL_DEPTH_TEST);
+				glFrontFace (GL_CW);
 				glDisable(GL_STENCIL_TEST);
-				camera.inverseProjMatOnY(); //enable when  the floor is made
+				glEnable(GL_DEPTH_TEST);
+
+				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+				glEnable( GL_BLEND );
+
+				W.update(camera.getViewMat(), camera.getProjMat());
+			    W.draw();
+
+			    glDisable( GL_BLEND );
+			    glBlendFunc(GL_ONE, GL_ZERO);
+
+			    glEnable( GL_MULTISAMPLE );
+				glEnable(GL_ALPHA_TEST);
+				glAlphaFunc(GL_GREATER, 0);
+
+				glFrontFace (GL_CCW);
+				//camera.inverseProjMatOnY(); //enable when  the floor is made
 			}
 			else
 			{
 			    glFrontFace (GL_CW);
-
 				glDisable(GL_DEPTH_TEST);			
 				//enable stencil testing
 				glEnable(GL_STENCIL_TEST);
@@ -243,28 +276,38 @@ int main () {
 				glStencilFunc(GL_EQUAL, 1, 0xFF); // Pass test if stencil value is 1
 			    glStencilMask(0x00); // Don't write anything to stencil buffer
 			    glDepthMask(GL_TRUE); // Write to depth buffer
-				camera.inverseProjMatOnY(); //enable when  the floor is made
+				glEnable(GL_DEPTH_TEST);
+				//camera.inverseProjMatOnY(); //enable when  the floor is made
 			}
+			if(i%2 == 1)
+				SC->updateShaders(camera.getViewMat(), camera.getProjMat(), false);
+			else
+				SC->updateShaders(camera.getViewMat(), camera.getProjMat(), true);
 
 
 			bg.setViewMatrix(view_mat);
-			Mo.update(view_mat, camera.getProjMat());
-			
 			
 			Mo.draw(elapsed_seconds, camera.getViewMat());
+			//glClear (GL_DEPTH_BUFFER_BIT);
 			
-			glUseProgram (shader_programme);
-			glUniformMatrix4fv (proj_mat_location, 1, GL_FALSE, camera.getProjMat());
+			//glUseProgram (shader_programme);
+			//glUniformMatrix4fv (proj_mat_location, 1, GL_FALSE, camera.getProjMat());
 	
-			for(int i = 0; i < 20; i++)
-				Units[i].draw();
+			SC->use(UNIT_SHADER);
+			unitBuf->bindModel();
+			for(int j = 0; j < 20; j++){
+				Units[j].draw();
+				unitTex.bind();
+				unitBuf->drawArrays();
+			}
 			
 			shader.use();
-			BC.update();
-			BC.draw(camera);
-			
-			glUseProgram(shader_programme);		
-			
+			glFrontFace (GL_CCW);
+			if(i%2 == 1){
+				BC.draw(camera);
+			}
+
+			SC->use(UNIT_SHADER);
 			
 			if (GLFW_PRESS == glfwGetKey (g_window, GLFW_KEY_ESCAPE)) {
 				glfwSetWindowShouldClose (g_window, 1);

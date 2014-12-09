@@ -25,7 +25,7 @@ class mountain {
 	GLuint points_vbo, normals_vbo, vao, tex, tex_vbo;
 
 	//shader
-	shaderhelper shader;
+	//	shaderhelper shader;
 
 	bufferhelper bufHelp;
 	texturehelper texHelp;
@@ -48,12 +48,13 @@ class mountain {
 		*/
 		for(int i = 0; i < x; i++)
 			for(int j = 0; j < y; j++)
-				(i > 0 and i < x - 1 and j > 0 and j < y-1)?
-				map[i + (j*x)] = 50.0f * (y/(j+5)) *static_cast <float> (rand()) / (static_cast <float> (RAND_MAX))
-				:
+				if(i > 0 and i < x - 1 and j > 0 and j < y-1){
+				map[i + (j*x)] = 50.0f * (y/(j+5)) *static_cast <float> (rand()) / (static_cast <float> (RAND_MAX));
+				}
+				else
 				map[i + (j*x)] = 0.0f;
 
-		BoxFilterHeightMap(x,y,map,false);
+		BoxFilterHeightMap(x,y,map,true);
 
 		//generate coordinate data
 		glm::vec3* vertData = (glm::vec3*) malloc(sizeof(glm::vec3) * x * y);
@@ -129,12 +130,13 @@ class mountain {
         pos_y = 0.0f;
 
         //graphics related
-        shader = shaderhelper ("mountain_vs.glsl", "mountain_fs.glsl", 3);
+        /*shader = shaderhelper ("mountain_vs.glsl", "mountain_fs.glsl", 3);
 		shader.use();
 
 		shader.setLocation("view", 0);
 		shader.setLocation("unit", 1);
 		shader.setLocation("proj", 2);
+		*/
 
         texHelp = texturehelper("mountain.png");
 
@@ -145,14 +147,15 @@ class mountain {
 	}
 
 	void update(mat4 view_mat, GLfloat *proj_mat){
-		shader.use();
+		/*shader.use();
 		shader.bindLocationFloatarray(proj_mat, 2);
-		shader.bindLocationMat(view_mat, 0);
+		shader.bindLocationMat(view_mat, 0);*/
 	}
 
 	void draw(float delta, mat4 view_mat) {
 		mat4 mountain_m = translate (identity_mat4 (), vec3 (pos_x, pos_y, pos_z -400.0f));
 		
+		shaderhelper shader = SC->getShader(MOUNTAIN_SHADER);
 		shader.use();
 		shader.bindLocationMat(mountain_m, 1);
 		

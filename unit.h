@@ -147,19 +147,17 @@ public:
 		//get rotations
 		mat4 unit_rot = rotateAngle();
 		mat4 unit_mat = translate (identity_mat4 (), vec3 (pos[0], pos[1], pos[2])) * unit_rot;
-		glUniformMatrix4fv (unit_mat_location, 1, GL_FALSE, unit_mat.m);
+		
+		SC->updateUnit(UNIT_SHADER, unit_mat);
+	}
 
-		//bind texture
-		glBindTexture (GL_TEXTURE_2D, texture);
-
-		//bind vertex array
-		glBindBuffer (GL_ARRAY_BUFFER, model_vao);
-		glVertexAttribPointer (0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-		glEnableVertexAttribArray (0);
-		glBindVertexArray (model_vao);
-
-		//draw the shit
-		glDrawArrays (GL_TRIANGLES, 0, model_point_count);
+	void printUnitMat(){
+		mat4 unit_rot = rotateAngle();
+		mat4 unit_mat = translate (identity_mat4 (), vec3 (pos[0], pos[1], pos[2])) * unit_rot;
+		
+		GLfloat *pointer = unit_mat.m;
+		for(int i = 0; i < 16; i++)
+			printf("[%i] %f\n", i, pointer[i]); 
 	}
 	
 };

@@ -22,7 +22,7 @@ class texturehelper {
 		tex_location = glGetUniformLocation (shader, "basic_texture");
 
 		//might be needed
-		glUniform1i (tex_location, 0);
+		//glUniform1i (tex_location, 0);
 
 		glActiveTexture (GL_TEXTURE0);
 		assert (load_texture(text_string, &tex));
