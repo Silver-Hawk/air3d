@@ -11,17 +11,20 @@ public:
 	}
 
 	void update(float delta) {
+		float rotSpeed = (self->getRotationSpeed() * delta);
+		if(glfwGetKey(g_window, up))
+			rotSpeed *= 0.50;
+
 		if (glfwGetKey (g_window, left)) {
-			self->addAngle(self->getRotationSpeed() * delta);
+			self->addAngle(rotSpeed);
 		}
 		if (glfwGetKey (g_window, right)) {
-			self->addAngle(-self->getRotationSpeed() * delta);
+			self->addAngle(-rotSpeed);
 		}
 		//unit_angle = fmod(unit_angle, 360.0f);
 		if (glfwGetKey(g_window, up)){
 			self->addVelocity(delta);
 		}
-		self->applyVelocity();
 	}
 };
 

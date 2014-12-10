@@ -54,8 +54,6 @@ public:
 		if(SPEED_SETUP == SPEED_MAX){
 			self->addVelocity(0.1f * delta);
 		}
-
-		self->applyVelocity();
 	}
 
 

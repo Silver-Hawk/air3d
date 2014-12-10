@@ -9,7 +9,9 @@
 #include "bvec.h"
 
 #define DEG_TO_RAD 0.0174532925
-#define MAX_SPEED 2.0f
+#define MAX_SPEED 4.0f
+
+#define WATER_BOUNCE_FORCE 0.85
 
 class unit {
 public:
@@ -138,6 +140,10 @@ public:
 		velocity /= 1.01f;
 	}
 
+	void addGravity(){
+		velocity.y -= 0.07f;
+	}
+
 	void applyVelocity(){
 		pos[0] += velocity.x;
 		pos[1] += velocity.y;
@@ -151,6 +157,27 @@ public:
 		SC->updateUnit(UNIT_SHADER, unit_mat);
 	}
 
+	void update(){
+		//only add gravity if the plane is moving slowly
+		if(velocity.x < MAX_SPEED*0.75)
+			addGravity();
+		velocityFade();
+		applyVelocity();
+		bounceOnWater();
+	}
+
+	void bounceOnWater(){
+		//check water surface collision
+		if(pos[1] < 0){
+			pos[1] = -pos[1];
+			velocity.y = -velocity.y * WATER_BOUNCE_FORCE;
+			setAngle(atan2(velocity.y, velocity.x)*(180/3.14));
+		}
+	}
+
+
+	
+	//debug
 	void printUnitMat(){
 		mat4 unit_rot = rotateAngle();
 		mat4 unit_mat = translate (identity_mat4 (), vec3 (pos[0], pos[1], pos[2])) * unit_rot;

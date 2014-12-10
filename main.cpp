@@ -31,6 +31,10 @@ int* getWorldBounds(){
 #include "shadercontroller.h"
 shadercontroller* SC;
 
+//make assets controller visible
+#include "assetsController.h"
+assetscontroller* AC;
+
 #include "bufferHelper.h"
 #include "texturehelper.h"
 #include "bvec.h"
@@ -60,6 +64,7 @@ int main () {
 	WC = worldController(-2000, 0, 2000, 5000);
 	bulletController BC = bulletController();
 	SC = new shadercontroller();
+	AC = new assetscontroller();
 
 	glEnable (GL_DEPTH_TEST); // enable depth-testing
 	glDepthFunc (GL_LESS); // depth-testing interprets a smaller value as "closer"
@@ -151,7 +156,7 @@ int main () {
 	W.update(camera.getViewMat(), camera.getProjMat());
 
 	camera.setFollow(0, &Units[0]);
-	//camera.setFollow(1, &Units[1]);
+	camera.setFollow(1, &Units[1]);
 
 	player playertest = player(GLFW_KEY_LEFT, GLFW_KEY_RIGHT, GLFW_KEY_UP, &Units[0]);
 
@@ -171,6 +176,9 @@ int main () {
 			enemytest[i].update(elapsed_seconds);
 		playertest.update(elapsed_seconds);
 		
+		for(int i=0; i<20; i++)
+			Units[i].update();
+
 		camera.updateFollow();
 
 		SC->updateShaders(camera.getViewMat(), camera.getProjMat(), true);

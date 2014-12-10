@@ -126,17 +126,7 @@ class mountain {
         	uvarray[i*2+1] = uvData[(int)mesh[i]].y;
         }
 
-        //
         pos_y = 0.0f;
-
-        //graphics related
-        /*shader = shaderhelper ("mountain_vs.glsl", "mountain_fs.glsl", 3);
-		shader.use();
-
-		shader.setLocation("view", 0);
-		shader.setLocation("unit", 1);
-		shader.setLocation("proj", 2);
-		*/
 
         texHelp = texturehelper("mountain.png");
 
