@@ -9,7 +9,7 @@
 class bullet {
 	public:
 	angular a;
-	sprite s;
+	sprite *s;
 
 	float speed;
 	float xspeed;
@@ -23,7 +23,7 @@ class bullet {
 
 	int debugId;
 
-	bullet(sprite spr, float angle, float x, float y, float speed){
+	bullet(sprite *spr, float angle, float x, float y, float speed){
 		a = angular();
 		a.setPos(x, y, 0.0f);
 		a.setAngle(angle);
@@ -38,7 +38,7 @@ class bullet {
 		next = NULL;
 	}
 
-	bullet(sprite spr, float angle, float x, float y, float speed, int id){
+	bullet(sprite *spr, float angle, float x, float y, float speed, int id){
 		a = angular();
 		a.setPos(x, y, 0.0f);
 		a.setAngle(angle);
@@ -82,10 +82,16 @@ class bullet {
 		free(this);
 	}
 
+	void applyGravity(){
+		yspeed -= 0.09f;
+	}
+
 	void update(){
 		if(firstDraw){
 			a.addX(xspeed);
 			a.addY(yspeed);
+
+			applyGravity();
 		}
 	}
 
@@ -96,7 +102,7 @@ class bullet {
 	void draw(){
 		firstDraw = true;
 		a.bindBulletMat();
-		s.draw();
+		s->draw();
 	}
 };
 

@@ -15,7 +15,8 @@ class bufferhelper {
 	int firstIndexSize;
 
 	bufferhelper(){
-
+		glGenVertexArrays (1, &vao);
+		firstIndexSize = 0;
 	}
 
 	bufferhelper(int buffer_count){

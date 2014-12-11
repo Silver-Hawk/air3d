@@ -8,7 +8,7 @@ class sprite {
 	public:
 	
 	bufferhelper bufHelp;
-	texturehelper texHelp;
+	int texture;
 
 	float scale;
 
@@ -16,9 +16,7 @@ class sprite {
 
 	}
 
-
-
-	sprite(texturehelper texBuf){
+	sprite(int texindex){
 		GLfloat quad[] = {
              -1.0f,  -1.0f,   0.0f,
              1.0f,  -1.0f,   0.0f,
@@ -37,7 +35,7 @@ class sprite {
         	0.0f, 0.0f
         };
 
-		texHelp = texBuf;
+		texture = texindex;
 		
 		bufHelp = bufferhelper(2);
 		bufHelp.bind(0, 18 * sizeof (GLfloat), quad, 3);
@@ -45,7 +43,7 @@ class sprite {
 	}
 
 	//scales
-	sprite(texturehelper texBuf, float s){
+	sprite(int texindex, float s){
 		GLfloat quad[] = {
              -1.0f,  -1.0f,   0.0f,
              1.0f,  -1.0f,   0.0f,
@@ -64,7 +62,7 @@ class sprite {
         	0.0f, 0.0f
         };
 
-		texHelp = texBuf;
+		texture = texindex;
 		
 
 		for(int i = 0; i < 18; i++)
@@ -77,7 +75,7 @@ class sprite {
 	}
 
     void bind(){
-        texHelp.bind();
+        AC->bindTexture(texture);
         bufHelp.bindAll();
     }
 

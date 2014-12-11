@@ -2,16 +2,32 @@
 #define __PLAYER_CLASS_H__
 
 #include "unit.h"
+#include "weaponcontroller.h"
 
 class player {
 public:
-	int left, right, up;
+	int left, right, up, shoot;
 	unit *self;
-	player(int left, int right, int up, unit *self) : left(left), right(right), up(up), self(self)  {
+	weaponcontroller *wc;
+
+	player* prev;
+	player* next;
+
+	player(int left, int right, int up, int shoot) : left(left), right(right), up(up), shoot(shoot)  {
+		wc = new weaponcontroller();
+		wc->setBehavior(WEAPON_SHOTGUN);
+
+		prev = next = NULL;
+
+		self = new unit(0.0f, 0.0f, 0.0f);
 	}
 
 	void update(float delta) {
 		float rotSpeed = (self->getRotationSpeed() * delta);
+
+		//update weapon controller
+		wc->update(delta, self, 5.481503f);
+
 		if(glfwGetKey(g_window, up))
 			rotSpeed *= 0.50;
 
@@ -25,6 +41,20 @@ public:
 		if (glfwGetKey(g_window, up)){
 			self->addVelocity(delta);
 		}
+
+		if (glfwGetKey(g_window, shoot)){
+			SC->use(SPRITE_SHADER);
+			wc->fire(self);
+		}
+		self->update();
+	}
+
+	void draw(){
+		self->draw();
+	}
+
+	unit *getUnit(){
+		return self;
 	}
 };
 

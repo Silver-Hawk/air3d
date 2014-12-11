@@ -2,6 +2,7 @@
 #define __BULLET_CONTROLLER_H__
 
 #include "bullet.h"
+#include "cam.h"
 
 class bulletController {
 public:

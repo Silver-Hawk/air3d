@@ -9,5 +9,6 @@ out vec2 coord;
 
 void main() {
 	coord = texture_coord;
-	gl_Position = proj * view * unit * vec4(vertex_position,1.0);
+	mat4 test = mat4(vec4(1.0,0.0,0.0,0.0), vec4(0.0,1.0,0.0,0.0),vec4(0.0,0.0,1.0,0.0),vec4(0.0,0.0,0.0,1.0));
+	gl_Position = proj * view * test * unit * vec4(vertex_position,1.0);
 }

@@ -1,6 +1,7 @@
 #ifndef __ENEMY_CLASS_H__
 #define __ENEMY_CLASS_H__
 
+#include "weaponcontroller.h"
 #include "unit.h"
 #include "bvec.h"
 
@@ -14,14 +15,28 @@ class enemy {
 public:
 	unit *self;
 	unit *target;
+	weaponcontroller *wc;
 	
+	enemy* prev;
+	enemy* next;
+
 	//behavior variables
 	int MOV;
 	int SPEED_SETUP;
 
-	enemy (int Movement_Behavior, unit *me) {
+	enemy (int Movement_Behavior) {
 		MOV = Movement_Behavior;
-		self = me;
+
+		wc = new weaponcontroller();
+
+		prev = next = NULL;
+
+		//either give shotgun or rifle
+		int weapon = round(static_cast <float> (rand()) / (static_cast <float> (RAND_MAX))); 
+
+		wc->setBehavior(weapon);
+
+		self = new unit(0.0f, 0.0f, 0.0f);
 	}
 
 	void setTarget(unit *tar){
@@ -33,8 +48,32 @@ public:
 		if(MOV == MOV_SEEKING)
 			steer = seeking();
 
+		if(wc->reloading())
+			steer = fleeing();
+
+		wc->update(delta, self, 5.481503f);
+
+
+		if(distanceToTarget() < 250)
+			if(!wc->reloading())
+				wc->fire(self);
+
 		calculate_changes(delta, steer);
+		self->update();
 	}
+
+	void draw(){
+		self->draw();
+	}
+
+	//AI CHECKS
+	float distanceToTarget(){
+		bvec2<float>* selfpos = self->get2Dpos();
+		bvec2<float>* targetpos = target->get2Dpos();
+
+		return selfpos->dist(*targetpos);// selfpos->dist(targetpos);
+	}
+
 
 	//MOVEMENT BEHAVIORS
 	bvec2<float> seeking() {
@@ -43,6 +82,12 @@ public:
 		bvec2<float>dir = targetdir - selfdir; 
 		dir.normalize();
 		SPEED_SETUP = SPEED_MAX;
+		return dir;
+	}
+
+	bvec2<float> fleeing(){
+		bvec2<float>dir = seeking();
+		dir *= -1;
 		return dir;
 	}
 
@@ -56,6 +101,9 @@ public:
 		}
 	}
 
+	unit* getUnit(){
+		return self;
+	}
 
 };
 

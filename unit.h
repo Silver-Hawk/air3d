@@ -7,6 +7,8 @@
 
 #include <cmath>
 #include "bvec.h"
+#include "texturehelper.h"
+#include "bufferHelper.h"
 
 #define DEG_TO_RAD 0.0174532925
 #define MAX_SPEED 4.0f
@@ -29,7 +31,8 @@ public:
 	GLuint model_vao;
 	int model_point_count;
 
-	GLuint texture;
+	texturehelper* texture;
+	bufferhelper* buffers;
 
 	//bind location
 	int unit_mat_location;
@@ -61,9 +64,14 @@ public:
 		model_point_count = model_points;
 	}
 
-	void setTex(GLuint tex){
+	void setTex(texturehelper* tex){
 		texture = tex;
 	}
+
+	void setBuffers(bufferhelper* buf){
+		buffers = buf;
+	}
+
 
 	mat4 rotateAngle(){
 		yaw = angle;
@@ -155,6 +163,11 @@ public:
 		mat4 unit_mat = translate (identity_mat4 (), vec3 (pos[0], pos[1], pos[2])) * unit_rot;
 		
 		SC->updateUnit(UNIT_SHADER, unit_mat);
+
+		buffers->bindModel();
+		texture->bind();
+		buffers->drawArrays();
+
 	}
 
 	void update(){

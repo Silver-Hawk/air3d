@@ -128,7 +128,7 @@ class mountain {
 
         pos_y = 0.0f;
 
-        texHelp = texturehelper("mountain.png");
+        //texHelp = texturehelper("mountain.png");
 
         bufHelp = bufferhelper(3);
         bufHelp.bind(0, mesh_indices * sizeof (GLfloat) * 3, vertices, 3);
@@ -149,14 +149,10 @@ class mountain {
 		shader.use();
 		shader.bindLocationMat(mountain_m, 1);
 		
-		texHelp.bind();
+		AC->bindTexture(MOUNTAIN_TEXTURE);
 		bufHelp.bindAll();
 
 		bufHelp.drawTriangles();
-
-		/*mountain_m = scale(mountain_m, vec3 (1.0f, -1.0f, 1.0f));
-		shader.bindLocationMat(mountain_m, 1);
-		bufHelp.drawTriangles();*/
 	}
 
 

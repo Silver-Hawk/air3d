@@ -2,6 +2,8 @@
 #define __CAM_CLASS_H__
 
 #include <vector>
+#include "unit.h"
+
 #define GLM_FORCE_RADIANS
 #include "glm/gtc/type_ptr.hpp"
 // glm::translate, glm::rotate, glm::scale
