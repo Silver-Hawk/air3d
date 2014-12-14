@@ -5,6 +5,7 @@
 
 #define WEAPON_SHOTGUN 0//mutiple bullets at the same time
 #define WEAPON_RIFLE 1//burst fire
+#define WEAPON_SINGLE_SHOT 2 //normal enemy weapon
 
 class weaponcontroller {
 	public:
@@ -16,7 +17,7 @@ class weaponcontroller {
 	float reloadTime; 
 
 	int shots;
-	int splits; //amount of fire when fire is shot
+	int splits; //amount of bullets when fire is run
 	int spread; //spread angle
 
 	int weaponBehavior;
@@ -26,6 +27,8 @@ class weaponcontroller {
 
 	float *split_angles;
 
+	//enemy or player
+	int controller;
 
 	weaponcontroller(){
 		reloadtimer  = 0.0f;
@@ -37,6 +40,10 @@ class weaponcontroller {
 		reloadTime = 1.5f;
 	}
 
+	void setController(int control){
+		controller = control;
+	}
+
 	//f.x. can be WEAPON_SHOTGUN 
 	void setBehavior(int type){
 		weaponBehavior = type;
@@ -44,6 +51,9 @@ class weaponcontroller {
 
 	void fire(unit *u){
 		if(reloadtimer <= 0){
+			if(weaponBehavior == WEAPON_SINGLE_SHOT)
+				fireSingle(new sprite(BULLET_TEXTURE, 5.0f), split_angles[(int) (splits/2)], xstart, ystart, 10.0f, u);
+
 			if(weaponBehavior == WEAPON_SHOTGUN)
 				fireShotgun(u);
 			
@@ -64,19 +74,22 @@ class weaponcontroller {
 				//make different size shots
 				float scale = 2.0f + 3.0f * static_cast <float> (rand()) / (static_cast <float> (RAND_MAX));
 
-				BC->add(new bullet(new sprite(BULLET_TEXTURE, scale), split_angles[j]+diffAngle, xstart, ystart, 2.0f * scale, 1));
-				BC->last->addPlaneSpeed(u->velocity.x, u->velocity.y);
+				fireSingle(new sprite(BULLET_TEXTURE, scale), split_angles[j]+diffAngle, xstart, ystart, 2.0f * scale, u);
 			}
 		}
 	}
 
 	void fireRifle(unit* u){
 		for(int j=0;j<splits;j++){
-			BC->add(new bullet(new sprite(BULLET_TEXTURE, 5.0f), split_angles[j], xstart, ystart, 10.0f, 1));
-			BC->last->addPlaneSpeed(u->velocity.x, u->velocity.y);	
+			fireSingle(new sprite(BULLET_TEXTURE, 5.0f), split_angles[j], xstart, ystart, 10.0f, u);
 		}
 
 		firetimer = reloadTime/(shots*2);
+	}
+
+	void fireSingle(sprite* s, float angle, float x, float y, float speed, unit* u){
+		BC->add(new bullet(s, angle, x, y, speed, controller));
+		BC->last->addPlaneSpeed(u->velocity.x, u->velocity.y);	
 	}
 
 	void update(float dt, unit* u, float displacement){

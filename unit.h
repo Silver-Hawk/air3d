@@ -37,6 +37,9 @@ public:
 	//bind location
 	int unit_mat_location;
 
+	//collision
+	float collisionRadius;
+
 	unit() {
 		pos[0] = 0.0f;
 		pos[1] = 0.0f;
@@ -44,6 +47,7 @@ public:
 		rotation_speed = 360.0f;
 		velocity_speed = 0.50f;
 		angle = 0.0f;
+		collisionRadius = 5.0f;
 	}
 
 	unit(float x, float y, float z) {
@@ -53,10 +57,15 @@ public:
 		rotation_speed = 360.0f;
 		velocity_speed = 0.50f;
 		angle = 0.0f;
+		collisionRadius = 5.0f;
 	}
 
 	void set_mat_location(int loc) {
 		unit_mat_location = loc;
+	}
+
+	void setCollisionRadius(float radius){
+		collisionRadius = radius;
 	}
 
 	void setVao(GLuint vao, int model_points){

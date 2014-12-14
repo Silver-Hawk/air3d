@@ -1,7 +1,7 @@
 #ifndef __HELPERS_H__
 #define __HELPERS_H__
 
-bool load_texture (const char* file_name, GLuint* tex) {
+bool load_texture (const char* file_name, GLuint* tex, float *xy = NULL) {
 	int x, y, n;
 	int force_channels = 4;
 	unsigned char* image_data = stbi_load (file_name, &x, &y, &n, force_channels);
@@ -12,9 +12,13 @@ bool load_texture (const char* file_name, GLuint* tex) {
 	// NPOT check
 	if ((x & (x - 1)) != 0 || (y & (y - 1)) != 0) {
 		fprintf (
-			stderr, "WARNING: texture %s is not power-of-2 dimensions\n", file_name
+			stderr, "WARNING: texture %s is not power-of-2 dimensions\n Size is %i x %i\n", file_name, x, y
 		);
 	}
+	//bind ratio
+	if(xy)
+		*xy = (float)(x/y);
+
 	int width_in_bytes = x * 4;
 	unsigned char *top = NULL;
 	unsigned char *bottom = NULL;
@@ -56,6 +60,11 @@ bool load_texture (const char* file_name, GLuint* tex) {
 	// set the maximum!
 	glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, max_aniso);
 	return true;
+}
+
+
+bool load_texture_get_scale(const char* file_name, GLuint* tex, float* xyratio){
+	return load_texture(file_name, tex, xyratio);
 }
 
 /* load a mesh using the assimp library */

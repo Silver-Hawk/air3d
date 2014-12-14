@@ -43,6 +43,10 @@ class shaderhelper {
 		glUniform3fv(locations[index], 1, vec);
 	}
 
+	void bindLocationFloat(GLfloat f, int index){
+		glUniform1f(locations[index], f);
+	}
+
 	void use(){
 		glUseProgram(shader);
 	}

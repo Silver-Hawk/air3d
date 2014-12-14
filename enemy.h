@@ -20,6 +20,8 @@ public:
 	enemy* prev;
 	enemy* next;
 
+	float health;
+
 	//behavior variables
 	int MOV;
 	int SPEED_SETUP;
@@ -28,14 +30,17 @@ public:
 		MOV = Movement_Behavior;
 
 		wc = new weaponcontroller();
-
 		prev = next = NULL;
-
 		//either give shotgun or rifle
-		int weapon = round(static_cast <float> (rand()) / (static_cast <float> (RAND_MAX))); 
+		/*int weapon = round(static_cast <float> (rand()) / (static_cast <float> (RAND_MAX))); 
+		wc->setBehavior(weapon);*/
 
-		wc->setBehavior(weapon);
 
+		wc->setBehavior(WEAPON_SINGLE_SHOT);
+		wc->setController(ENEMY_CONTROLLED);
+
+		health = 30 * static_cast <float> (rand()) / (static_cast <float> (RAND_MAX));
+		
 		self = new unit(0.0f, 0.0f, 0.0f);
 	}
 

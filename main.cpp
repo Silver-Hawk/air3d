@@ -14,7 +14,7 @@
 #define GL_LOG_FILE "gl.log"
 #define VERTEX_SHADER_FILE "test_vs.glsl"
 #define FRAGMENT_SHADER_FILE "test_fs.glsl"
-#define MESH_FILE "mergedjet3.obj"
+#define MESH_FILE "Lundsplane.obj"
 
 //Game classes
 #include "helpers.h"
@@ -27,19 +27,25 @@ int* getWorldBounds(){
 	return WC.getBoundsArray();
 }
 
-//make shader controller visible
+//make controllers visible
 #include "shadercontroller.h"
 shadercontroller* SC;
 
-//make assets controller visible
 #include "assetsController.h"
 assetscontroller* AC;
+
+#include "particlecontroller.h"
+particlecontroller *PC;
 
 #include "bulletController.h"
 bulletController* BC;
 
 #include "unitcontroller.h"
 unitcontroller* UC;
+
+#include "collisionDetection.h"
+collision *CD;
+
 
 #include "weaponcontroller.h"
 #include "bufferHelper.h"
@@ -72,6 +78,8 @@ int main () {
 	SC = new shadercontroller();
 	AC = new assetscontroller();
 	UC = new unitcontroller();
+	CD = new collision();
+	PC = new particlecontroller();
 
 	glEnable (GL_DEPTH_TEST); // enable depth-testing
 	glDepthFunc (GL_LESS); // depth-testing interprets a smaller value as "closer"
@@ -122,7 +130,7 @@ int main () {
 	UC->addPlayer(new player(GLFW_KEY_LEFT, GLFW_KEY_RIGHT, GLFW_KEY_UP, GLFW_KEY_SPACE));
 	UC->last_player->getUnit()->setBuffers(unitBuf);
 	UC->last_player->getUnit()->setTex(unitTex);
-	for(int i=0;i<19;i++){
+	for(int i=0;i<200;i++){
 		UC->addEnemy(new enemy(MOV_SEEKING));
 		UC->last_enemy->setTarget(UC->getPlayerUnit(0));
 		UC->last_enemy->getUnit()->setBuffers(unitBuf);
@@ -132,6 +140,7 @@ int main () {
 	printf("got this far\n");
 
 	water W = water();
+
 	W.update(camera.getViewMat(), camera.getProjMat());
 	printf("lol 1\n");
 
@@ -166,6 +175,10 @@ int main () {
 
 		SC->updateShaders(camera.getViewMat(), camera.getProjMat(), true);
 		BC->update();
+		PC->update();
+
+		//do collision detection
+		CD->checkAllAll();
 	
 		//DRAWING
 		// wipe the drawing surface clear
@@ -182,6 +195,7 @@ int main () {
 			// update view matrix
 
 			mat4 view_mat = camera.getViewMat();
+			printf("lol 1\n");
 			
 			if(i%2 == 1){
 				glFrontFace (GL_CW);
@@ -194,12 +208,12 @@ int main () {
 				W.update(camera.getViewMat(), camera.getProjMat());
 			    W.draw();
 
-			    glDisable( GL_BLEND );
+			   /* glDisable( GL_BLEND );
 			    glBlendFunc(GL_ONE, GL_ZERO);
 
 			    glEnable( GL_MULTISAMPLE );
 				glEnable(GL_ALPHA_TEST);
-				glAlphaFunc(GL_GREATER, 0);
+				glAlphaFunc(GL_GREATER, 0);*/
 
 				glFrontFace (GL_CCW);
 				//camera.inverseProjMatOnY(); //enable when  the floor is made
@@ -231,10 +245,12 @@ int main () {
 			else
 				SC->updateShaders(camera.getViewMat(), camera.getProjMat(), true);
 
+			printf("lol 2\n");
 
 			bg.setViewMatrix(view_mat);
 			
 			Mo.draw(elapsed_seconds, camera.getViewMat());
+			printf("lol 3\n");
 			
 			SC->use(UNIT_SHADER);
 			//unitBuf->bindModel();
@@ -247,12 +263,19 @@ int main () {
 				unitTex.bind();
 				unitBuf->drawArrays();
 			}*/
+			printf("lol 4\n");
 			
 			SC->use(SPRITE_SHADER);
 			glFrontFace (GL_CCW);
+			SC->getShader(SPRITE_SHADER).bindLocationFloat(1.0f, 4);
 			if(i%2 == 1){
+				printf("lol 4\n");
+
 				BC->draw(camera);
+				PC->draw(camera);
 			}
+			printf("lol 5\n");
+			
 
 			SC->use(UNIT_SHADER);
 			if (GLFW_PRESS == glfwGetKey (g_window, GLFW_KEY_ESCAPE)) {
@@ -263,6 +286,7 @@ int main () {
 		
 		// put the stuff we've been drawing onto the display
 		glfwSwapBuffers (g_window);
+		glFinish();
 	}
 	
 	// close GL context and any other GLFW resources

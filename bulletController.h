@@ -37,33 +37,14 @@ public:
 	}
 
 	void update(){
-		int count = 0;
 		//printf("bullet_count %i\n", bullet_count);
 		if(start){
 			int *bounds = getWorldBounds();
 			bullet* b = start;
 			while(b && bullet_count){
-				count++;
 				b->update();
 				if(!checkInsideWorld(bounds, b)){
-					bullet_count--;
-					
-					bullet* tmp = NULL;
-					if(b->next)
-						tmp = b->next;
-					
-					if(b == last)
-						if(b->prev)
-							last = b->prev;
-
-					if(start == b)
-						if(b->next)
-							start = b->next;
-					//printf("wow\n" );
-					b->destroy();
-
-					//printf("wow2\n");
-					b = tmp;
+					b = destroyBullet(b);
 				}
 				else
 				{
@@ -86,6 +67,26 @@ public:
 			}
 			b = b->next;
 		}
+	}
+
+	bullet* destroyBullet(bullet *b){
+		bullet_count--;
+					
+		bullet* tmp = NULL;
+		if(b->next)
+			tmp = b->next;
+		
+		if(b == last)
+			if(b->prev)
+				last = b->prev;
+
+		if(start == b)
+			if(b->next)
+				start = b->next;
+
+		b->destroy();
+
+		return tmp;
 	}
 
 	static bool checkInsideWorld(int* worldBounds, bullet *b){

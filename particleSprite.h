@@ -1,16 +1,15 @@
-#ifndef __BULLET_CLASS_H__
-#define __BULLET_CLASS_H__
-
-#define PLAYER_CONTROLLED 0
-#define ENEMY_CONTROLLED 1
+#ifndef __PARTICLE_CLASS_H__
+#define __PARTICLE_CLASS_H__
 
 #define DEG_TO_RAD 0.0174532925
+
+#define ANGLE_UP 90 
 
 #include "sprite.h"
 #include "angular.h"
 #include "bvec.h"
 
-class bullet {
+class particle {
 	public:
 	angular a;
 	sprite *s;
@@ -20,44 +19,18 @@ class bullet {
 	float yspeed;
 
 	//make it a double linked list
-	bullet *prev;
-	bullet *next;
+	particle *prev;
+	particle *next;
 
 	bool firstDraw;
 
-	int controlledBy;
+	float alp;
+	float alpDiff;
 
-	float damage;
-
-	bullet(sprite *spr, float angle, float x, float y, float speed, int controller){
+	particle(sprite *spr, float angle, float x, float y, float speed, float imageAngle, float alpha, float alphaChange){
 		a = angular();
 		a.setPos(x, y, 0.0f);
-		a.setAngle(angle);
-
-		this->speed = speed;
-		s = spr;
-		xspeed = speed * cos(DEG_TO_RAD * angle);
-		yspeed = speed * sin(DEG_TO_RAD * angle);
-		firstDraw = false;
-
-		prev = NULL;
-		next = NULL;
-		controlledBy = controller;
-
-		damage = 0.0f;
-	}
-
-	float getDmg(){
-		if(damage == 0){
-			return s->getScale() * 2.0f;
-		}
-		return damage;
-	}
-
-	/*bullet(sprite *spr, float angle, float x, float y, float speed, int id){
-		a = angular();
-		a.setPos(x, y, 0.0f);
-		a.setAngle(angle);
+		a.setAngle(imageAngle);
 
 		this->speed = speed;
 		s = spr;
@@ -68,23 +41,19 @@ class bullet {
 		prev = NULL;
 		next = NULL;
 
-		debugId = id;
-	}*/
-
-	void addPlaneSpeed(float dx, float dy){
-		xspeed += dx;
-		yspeed += dy;
+		alp = alpha;
+		alpDiff = alphaChange;
 	}
 
 	angular getPos(){
 		return a;
 	}
 
-	void setNext(bullet *b){
+	void setNext(particle *b){
 		next = b;
 	}
 
-	void setPrev(bullet *b){
+	void setPrev(particle *b){
 		prev = b;
 	}
 
@@ -107,7 +76,7 @@ class bullet {
 			a.addX(xspeed);
 			a.addY(yspeed);
 
-			applyGravity();
+			alp += alpDiff;
 		}
 	}
 
@@ -119,9 +88,14 @@ class bullet {
 		a.bindBulletMat();
 	}
 
+	void updateAlpha(){
+		SC->getShader(SPRITE_SHADER).bindLocationFloat(alp, 4);
+	}
+
 	void draw(){
 		firstDraw = true;
 		a.bindBulletMat();
+		updateAlpha();
 		s->draw();
 	}
 

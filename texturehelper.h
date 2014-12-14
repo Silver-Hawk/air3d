@@ -11,6 +11,8 @@ class texturehelper {
 	
 	GLint shader;
 
+	float xyscale;
+
 	texturehelper(){
 
 	}
@@ -25,7 +27,7 @@ class texturehelper {
 		//glUniform1i (tex_location, 0);
 
 		glActiveTexture (GL_TEXTURE0);
-		assert (load_texture(text_string, &tex));
+		assert (load_texture_get_scale(text_string, &tex, &xyscale));
 	}
 
 	void bind(){

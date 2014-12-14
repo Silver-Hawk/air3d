@@ -13,9 +13,12 @@ public:
 	player* prev;
 	player* next;
 
+	
+
 	player(int left, int right, int up, int shoot) : left(left), right(right), up(up), shoot(shoot)  {
 		wc = new weaponcontroller();
 		wc->setBehavior(WEAPON_SHOTGUN);
+		wc->setController(PLAYER_CONTROLLED);
 
 		prev = next = NULL;
 

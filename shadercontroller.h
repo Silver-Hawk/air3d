@@ -23,8 +23,10 @@ class shadercontroller {
 
 		initShader (UNIT_SHADER, "test_vs.glsl", "test_fs.glsl", 0);
 		initShader (MOUNTAIN_SHADER, "mountain_vs.glsl", "mountain_fs.glsl", 0);
-		initShader (SPRITE_SHADER, "shaders/bullet_vs.glsl", "shaders/bullet_fs.glsl", 0);	
+		initShader (SPRITE_SHADER, "shaders/bullet_vs.glsl", "shaders/bullet_fs.glsl", 1);	
 		initShader (WATER_SHADER, "shaders/water_vs.glsl", "shaders/water_fs.glsl", 0);	
+
+		shaders[SPRITE_SHADER].setLocation("alpha", 4);
 	}
 
 	void initShader(int index, const char* vs, const char* fs, int additionalUniforms){
