@@ -138,7 +138,7 @@ public:
 		}
 
 		//printf("maxDistance %f\n", maxDistance/0.75f);
-		setZ(std::min(std::max((maxDistance/0.75f),(120.0f)),1600.0f));
+		setZ(std::min(std::max((maxDistance/0.75f),(200.0f)),1600.0f));
 
 		if(getY() < 0.0f)
 			setY(0.0f);

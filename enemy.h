@@ -89,12 +89,10 @@ public:
 
 			if(DEATH_SETUP < 2){
 				if(DEATH_SETUP == DEAD_MOVE_LEFT){
-					printf("1 Adding angle %f\n",self->getRotationSpeed()*delta);
 					self->addAngle(self->getRotationSpeed()*delta);
 				}
 				else
 				{
-					printf("2 Adding angle %f\n",self->getRotationSpeed()*delta);
 					self->addAngle(-self->getRotationSpeed()*delta);
 				}
 

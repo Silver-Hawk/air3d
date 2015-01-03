@@ -185,15 +185,34 @@ public:
 			addGravity();
 		velocityFade();
 		applyVelocity();
-		bounceOnWater();
+		bounceOnWorld();
 	}
 
-	void bounceOnWater(){
+	void bounceOnWorld(){
+		int *bounds =  WC.getBoundsArray();
+		if(pos[0] < bounds[0]){
+			//pos[0] = bounds[0]-pos[0];
+			velocity.x = -velocity.x * WATER_BOUNCE_FORCE;
+			setAngle(atan2(velocity.y, velocity.x)*(180/3.14));
+		}
+
+		if(pos[0] > bounds[2]){
+			//pos[0] = pos[0]-bounds[2];
+			velocity.x = -velocity.x * WATER_BOUNCE_FORCE;
+			setAngle(atan2(velocity.y, velocity.x)*(180/3.14));	
+		}
+		
 		//check water surface collision
 		if(pos[1] < 0){
 			pos[1] = -pos[1];
 			velocity.y = -velocity.y * WATER_BOUNCE_FORCE;
 			setAngle(atan2(velocity.y, velocity.x)*(180/3.14));
+
+		}
+
+		if(pos[1] > bounds[3]){
+			velocity.y = -velocity.y * WATER_BOUNCE_FORCE;
+			setAngle(atan2(velocity.y, velocity.x)*(180/3.14));			
 		}
 	}
 

@@ -87,10 +87,30 @@ public:
 		while(e){
 			e->update(dt);
 			if(e->checkDead() && e->checkNearWater()){
-				e->destroy();
-			}
+				if(last_enemy == e){
+					if(e->prev){
+						last_enemy = e->prev;
+					}
+					else
+					{
+						enemies = NULL;
+					}
+					e->destroy();
+					break;
+				} 
 
-			e = e->next;
+				if(enemies == e){
+					if(e->next)
+						enemies = e->next;
+					else
+						enemies = NULL;
+				}
+				e = e->destroy();
+			}
+			else
+			{
+				e = e->next;
+			}
 		}
 	}
 

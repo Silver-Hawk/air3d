@@ -14,7 +14,7 @@
 #define GL_LOG_FILE "gl.log"
 #define VERTEX_SHADER_FILE "test_vs.glsl"
 #define FRAGMENT_SHADER_FILE "test_fs.glsl"
-#define MESH_FILE "Lundsplane.obj"
+#define MESH_FILE "test1.obj"
 
 //Game classes
 #include "helpers.h"
@@ -45,6 +45,9 @@ unitcontroller* UC;
 
 #include "collisionDetection.h"
 collision *CD;
+
+#include "enemyspawner.h"
+enemyspawner *ES;
 
 
 #include "weaponcontroller.h"
@@ -106,36 +109,30 @@ int main () {
 	/* tex test */
 	/* load the mesh using assimp */
 	SC->use(UNIT_SHADER);
+	
 	bufferhelper *unitBuf = new bufferhelper(0);
 	unitBuf->loadModel(MESH_FILE);
+	bufferhelper *unitBuf2 = new bufferhelper(0);
+	unitBuf2->loadModel(MESH_FILE);
+
 	texturehelper* unitTex = new texturehelper("AudioEquipment0039_2_S.jpg");
 
 	cam camera = cam();
 	mountain Mo = mountain(128,128);
 
-	//test unit class
-	//unit *Units = (unit*) malloc(20 * sizeof(unit));
-	
-	/*for(int i=0;i<20;i++){
-		Units[i] = unit(i*10.0f,fmod(i*10.0f, 50.f),0.0f);
-	}
-	Units[1].setRotationSpeed(30.0f);
-
-	enemy *enemytest = (enemy*) malloc(19 * sizeof(enemy));
-
-	for(int i=0;i<19;i++){
-		enemytest[i] = enemy(0, &Units[i+1]);
-		enemytest[i].setTarget(&Units[0]);
-	}*/
 	UC->addPlayer(new player(GLFW_KEY_LEFT, GLFW_KEY_RIGHT, GLFW_KEY_UP, GLFW_KEY_SPACE));
 	UC->last_player->getUnit()->setBuffers(unitBuf);
 	UC->last_player->getUnit()->setTex(unitTex);
-	for(int i=0;i<20;i++){
+	
+
+	ES = new enemyspawner(unitBuf, unitTex);
+	/*for(int i=0;i<20;i++){
 		UC->addEnemy(new enemy(MOV_SEEKING));
 		UC->last_enemy->setTarget(UC->getPlayerUnit(0));
-		UC->last_enemy->getUnit()->setBuffers(unitBuf);
+		UC->last_enemy->getUnit()->setBuffers(unitBuf);//unitBuf);
 		UC->last_enemy->getUnit()->setTex(unitTex);
-	}
+	}*/
+
 	
 
 	water W = water();
@@ -143,7 +140,7 @@ int main () {
 	W.update(camera.getViewMat(), camera.getProjMat());
 
 	camera.setFollow(0, UC->getPlayerUnit(0));
-	camera.setFollow(1, UC->getEnemyUnit(0));
+	//camera.setFollow(1, UC->getEnemyUnit(0));
 
 
 	while (!glfwWindowShouldClose (g_window)) {
@@ -158,25 +155,22 @@ int main () {
 		// update other events like input handling 
 		glfwPollEvents ();
 
-		/*playertest.update(elapsed_seconds);
-		for(int i=0; i<19; i++)
-			enemytest[i].update(elapsed_seconds);
-
-		
-		for(int i=0; i<20; i++)
-			Units[i].update();*/
 
 		UC->update(elapsed_seconds);
 
 		camera.updateFollow();
 
+
 		SC->updateShaders(camera.getViewMat(), camera.getProjMat(), true);
+		
 		BC->update();
 		PC->update();
 
 		//do collision detection
 		CD->checkAllAll();
-	
+
+		ES->update(elapsed_seconds);
+
 		//DRAWING
 		// wipe the drawing surface clear
 		glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -249,7 +243,7 @@ int main () {
 			//unitBuf->bindModel();
 			//unitTex->bind();
 			UC->draw();
-			unitBuf->drawArrays();
+			//unitBuf->drawArrays();
 			/*for(int j = 0; j < 20; j++){
 				UC->draw();
 				Units[j].draw();
@@ -261,7 +255,6 @@ int main () {
 			glFrontFace (GL_CCW);
 			SC->getShader(SPRITE_SHADER).bindLocationFloat(1.0f, 4);
 			if(i%2 == 1){
-
 				BC->draw(camera);
 				PC->draw(camera);
 			}

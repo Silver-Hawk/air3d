@@ -24,7 +24,6 @@ public:
 					b = b->next;
 					continue;
 				}
-
 				if(checkCollision(b, e->getUnit())){
 					e->health -= b->getDmg();
 					printf("Enemy health is now: %f bullet did %f dmg\n", e->health, b->getDmg());
@@ -34,6 +33,7 @@ public:
 				{
 					b = b->next;
 				}
+				
 			}
 			e = e->next;
 		}

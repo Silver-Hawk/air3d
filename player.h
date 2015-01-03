@@ -17,8 +17,13 @@ public:
 
 	player(int left, int right, int up, int shoot) : left(left), right(right), up(up), shoot(shoot)  {
 		wc = new weaponcontroller();
-		wc->setBehavior(WEAPON_SHOTGUN);
+		wc->setBehavior(WEAPON_RIFLE);
 		wc->setController(PLAYER_CONTROLLED);
+
+		wc->shots = 40;
+		wc->splits = 10; //amount of bullets when fire is run
+		wc->spread = 15; //spread angle
+
 
 		prev = next = NULL;
 

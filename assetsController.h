@@ -2,6 +2,7 @@
 #define __ASSETS_CONTROLLER_CLASS_H__
 
 #include "texturehelper.h"
+#include "bufferHelper.h"
 
 #define GLM_FORCE_RADIANS
 #include "glm/glm.hpp"
@@ -21,21 +22,33 @@
 #define EXPLOSION_TEXTURE 4
 #define EXPLOSION_PATH "explosion5x5.png"
 
-
 #define NUM_TEXTURES 5
+
+#define MODEL_PLANE 0
+#define MODEL_PLANE_PATH "test1.obj"
+#define MODEL_JET 1
+#define MODEL_JET_PATH "test1.obj"
+
+#define NUM_MODELS 2
 
 class assetscontroller {
 	public:
 	texturehelper *textures;
+	bufferhelper *plane;
+	bufferhelper *jet;
 
 	assetscontroller(){
 			textures = (texturehelper*) malloc(sizeof(texturehelper) * NUM_TEXTURES);
-
+			
 			initTexture(UNIT_TEXTURE, UNIT_PATH);
 			initTexture(MOUNTAIN_TEXTURE, MOUNTAIN_PATH);
 			initTexture(BULLET_TEXTURE, BULLET_PATH);
 			initTexture(POW_TEXTURE, POW_PATH);
 			initTexture(EXPLOSION_TEXTURE, EXPLOSION_PATH);
+
+	
+			/*plane = new bufferhelper(0);
+			plane->loadModel(MODEL_PLANE_PATH);*/
 	}
 
 	void initTexture(int index, const char* path){
@@ -53,6 +66,7 @@ class assetscontroller {
 	void bindTexture(int index){
 		textures[index].bind();
 	}
+
 };
 
 
