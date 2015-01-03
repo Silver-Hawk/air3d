@@ -86,7 +86,11 @@ public:
 		enemy *e = enemies;
 		while(e){
 			e->update(dt);
-			e = e->next;		
+			if(e->checkDead() && e->checkNearWater()){
+				e->destroy();
+			}
+
+			e = e->next;
 		}
 	}
 

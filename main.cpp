@@ -130,24 +130,21 @@ int main () {
 	UC->addPlayer(new player(GLFW_KEY_LEFT, GLFW_KEY_RIGHT, GLFW_KEY_UP, GLFW_KEY_SPACE));
 	UC->last_player->getUnit()->setBuffers(unitBuf);
 	UC->last_player->getUnit()->setTex(unitTex);
-	for(int i=0;i<200;i++){
+	for(int i=0;i<20;i++){
 		UC->addEnemy(new enemy(MOV_SEEKING));
 		UC->last_enemy->setTarget(UC->getPlayerUnit(0));
 		UC->last_enemy->getUnit()->setBuffers(unitBuf);
 		UC->last_enemy->getUnit()->setTex(unitTex);
 	}
 	
-	printf("got this far\n");
 
 	water W = water();
 
 	W.update(camera.getViewMat(), camera.getProjMat());
-	printf("lol 1\n");
 
 	camera.setFollow(0, UC->getPlayerUnit(0));
 	camera.setFollow(1, UC->getEnemyUnit(0));
 
-	printf("got this far\n");
 
 	while (!glfwWindowShouldClose (g_window)) {
 		static double previous_seconds = glfwGetTime ();
@@ -195,7 +192,6 @@ int main () {
 			// update view matrix
 
 			mat4 view_mat = camera.getViewMat();
-			printf("lol 1\n");
 			
 			if(i%2 == 1){
 				glFrontFace (GL_CW);
@@ -245,12 +241,9 @@ int main () {
 			else
 				SC->updateShaders(camera.getViewMat(), camera.getProjMat(), true);
 
-			printf("lol 2\n");
-
 			bg.setViewMatrix(view_mat);
 			
 			Mo.draw(elapsed_seconds, camera.getViewMat());
-			printf("lol 3\n");
 			
 			SC->use(UNIT_SHADER);
 			//unitBuf->bindModel();
@@ -263,19 +256,15 @@ int main () {
 				unitTex.bind();
 				unitBuf->drawArrays();
 			}*/
-			printf("lol 4\n");
 			
 			SC->use(SPRITE_SHADER);
 			glFrontFace (GL_CCW);
 			SC->getShader(SPRITE_SHADER).bindLocationFloat(1.0f, 4);
 			if(i%2 == 1){
-				printf("lol 4\n");
 
 				BC->draw(camera);
 				PC->draw(camera);
 			}
-			printf("lol 5\n");
-			
 
 			SC->use(UNIT_SHADER);
 			if (GLFW_PRESS == glfwGetKey (g_window, GLFW_KEY_ESCAPE)) {

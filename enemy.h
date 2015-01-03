@@ -11,6 +11,10 @@
 #define SPEED_MIN 1
 #define SPEED_NONE 2
 
+#define DEAD_MOVE_RIGHT 0
+#define DEAD_MOVE_LEFT 1
+#define DEAD_MOVE_NONE 2
+
 class enemy {
 public:
 	unit *self;
@@ -25,6 +29,9 @@ public:
 	//behavior variables
 	int MOV;
 	int SPEED_SETUP;
+	int DEATH_SETUP;
+
+	bool dead;
 
 	enemy (int Movement_Behavior) {
 		MOV = Movement_Behavior;
@@ -42,6 +49,10 @@ public:
 		health = 30 * static_cast <float> (rand()) / (static_cast <float> (RAND_MAX));
 		
 		self = new unit(0.0f, 0.0f, 0.0f);
+
+		dead = false;
+
+		DEATH_SETUP = -1;
 	}
 
 	void setTarget(unit *tar){
@@ -49,26 +60,88 @@ public:
 	}
 
 	void update(float delta) {
-		bvec2<float> steer;
-		if(MOV == MOV_SEEKING)
-			steer = seeking();
+		checkDead();
 
-		if(wc->reloading())
-			steer = fleeing();
+		if(!dead){
+			bvec2<float> steer;
+			if(MOV == MOV_SEEKING)
+				steer = seeking();
 
-		wc->update(delta, self, 5.481503f);
+			if(wc->reloading())
+				steer = fleeing();
+
+			wc->update(delta, self, 5.481503f);
 
 
-		if(distanceToTarget() < 250)
-			if(!wc->reloading())
-				wc->fire(self);
+			if(distanceToTarget() < 250)
+				if(!wc->reloading())
+					wc->fire(self);
 
-		calculate_changes(delta, steer);
+			calculate_changes(delta, steer);
+		}
+		else
+		{
+			if(DEATH_SETUP < 0){
+				DEATH_SETUP =  floor(4 * static_cast <float> (rand()) / (static_cast <float> (RAND_MAX)));
+
+				printf("I AM DEAD with setup %i\n", DEATH_SETUP);
+			}
+
+			if(DEATH_SETUP < 2){
+				if(DEATH_SETUP == DEAD_MOVE_LEFT){
+					printf("1 Adding angle %f\n",self->getRotationSpeed()*delta);
+					self->addAngle(self->getRotationSpeed()*delta);
+				}
+				else
+				{
+					printf("2 Adding angle %f\n",self->getRotationSpeed()*delta);
+					self->addAngle(-self->getRotationSpeed()*delta);
+				}
+
+
+			}
+
+		}
+
 		self->update();
 	}
 
 	void draw(){
 		self->draw();
+	}
+
+	bool checkDead(){
+		if(health < 0)
+			dead = true;
+
+		return dead;
+	}
+
+	bool checkNearWater(){
+		if(self->pos[1] < 15.0f)
+			return true;
+		return false;
+	}
+
+	enemy* destroy(){
+		int numbers = 5 + floor(7* static_cast <float> (rand()) / (static_cast <float> (RAND_MAX)));
+		for(int i = 0; i <= numbers; i++){
+			float rot =	360 * static_cast <float> (rand()) / (static_cast <float> (RAND_MAX));
+			float randomSize = 35 * static_cast <float> (rand()) / (static_cast <float> (RAND_MAX));
+			float addx = -10 + 20 * static_cast <float> (rand()) / (static_cast <float> (RAND_MAX));
+			float addy = -10 + 20 * static_cast <float> (rand()) / (static_cast <float> (RAND_MAX));
+			PC->add(new particle(new sprite(EXPLOSION_TEXTURE, AC->getXscale(EXPLOSION_TEXTURE), AC->getYscale(EXPLOSION_TEXTURE), randomSize), 0.0f, self->pos[0] + addx, self->pos[1] + addy, 0.0f, rot, 3.0f, -0.01f));
+			PC->last->s->startAnimation(25);
+		}
+		
+		//update list
+		if(next)
+			next->prev = prev;
+		if(prev)
+			prev->next = next;
+
+		free(this);
+		return next;
 	}
 
 	//AI CHECKS

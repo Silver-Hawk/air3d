@@ -75,31 +75,24 @@ public:
 		count --;
 		particle* tmp = NULL;
 		
-		printf("D 1\n");
 		if(p->next)
 			tmp = p->next;
-		printf("D 2\n");
 		
 		if(p == last)
 			if(p->prev)
 				last = p->prev;
-		printf("D 3\n");
 
 		if(start == p)
 			if(p->next)
 				start = p->next;
 
-		printf("D 4\n");
 
 		p->destroy();
-
-		printf("D 5\n");
 
 		return tmp;
 	}
 
 	static bool checkInsideWorld(int* worldBounds, particle *p){
-		printf("check inside world\n");
 		angular a = p->getPos();
 		if(a.getX() < worldBounds[0] || a.getY() < worldBounds[1] || a.getX() > worldBounds[2] || a.getY() > worldBounds[3])
 			return false;

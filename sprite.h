@@ -152,7 +152,6 @@ class sprite {
     }
 
     bool animationDone(){
-        printf("check animationDone\n");
 
         if(animation && animationIndex >= animation)
             return true;
