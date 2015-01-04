@@ -80,12 +80,21 @@ GLFWwindow* g_window = NULL;
 //scores
 float score_seconds = 0;
 
+background bg;
+mountain *Mo;
+cam camera;
+water *W;
+
+void init(){
+	//game controllers
+	//set world bounds
+}
+
 int main () {
 	assert (restart_gl_log ());
 	assert (start_gl ());
 
-	//game controllers
-	//set world bounds
+	printf("Create controllers\n");
 	WC = worldController(-2000, 0, 2000, 5000);
 	BC = new bulletController();
 	SC = new shadercontroller();
@@ -93,6 +102,8 @@ int main () {
 	UC = new unitcontroller();
 	CD = new collision();
 	PC = new particlecontroller();
+
+	printf("Enable things\n");
 
 	glEnable (GL_DEPTH_TEST); // enable depth-testing
 	glDepthFunc (GL_LESS); // depth-testing interprets a smaller value as "closer"
@@ -114,7 +125,7 @@ int main () {
 	glViewport (0, 0, g_gl_width, g_gl_height);
 	
 	/* shader background */
-	background bg = background("background_vs.glsl", "background_fs.glsl");
+	bg = background("background_vs.glsl", "background_fs.glsl");
 	
 	/* tex test */
 	/* load the mesh using assimp */
@@ -127,33 +138,21 @@ int main () {
 
 	texturehelper* unitTex = new texturehelper("AudioEquipment0039_2_S.jpg");
 
-	cam camera = cam();
-	mountain Mo = mountain(128,128);
+	camera = cam();
+	Mo = new mountain(128,128);
 
 	UC->addPlayer(new player(GLFW_KEY_LEFT, GLFW_KEY_RIGHT, GLFW_KEY_UP, GLFW_KEY_SPACE));
 	UC->last_player->getUnit()->setBuffers(unitBuf2);
 	UC->last_player->getUnit()->setTex(unitTex);
 	
-
 	ES = new enemyspawner(unitBuf, unitTex);
-	/*for(int i=0;i<20;i++){
-		UC->addEnemy(new enemy(MOV_SEEKING));
-		UC->last_enemy->setTarget(UC->getPlayerUnit(0));
-		UC->last_enemy->getUnit()->setBuffers(unitBuf);//unitBuf);
-		UC->last_enemy->getUnit()->setTex(unitTex);
-	}*/
-
 	
+	W = new water();
 
-	water W = water();
-
-	W.update(camera.getViewMat(), camera.getProjMat());
-
+	W->update(camera.getViewMat(), camera.getProjMat());
+	
 	camera.setFollow(0, UC->getPlayerUnit(0));
-	//camera.setFollow(1, UC->getEnemyUnit(0));
 
-
-	//load data enabling font print
 	loadFontData();
 
 	while (!glfwWindowShouldClose (g_window)) {
@@ -162,129 +161,120 @@ int main () {
 		double elapsed_seconds = current_seconds - previous_seconds;
 		previous_seconds = current_seconds;
 
-		score_seconds += elapsed_seconds;
-
 		_update_fps_counter (g_window);
 		
 		//calculate actions
 		// update other events like input handling 
 		glfwPollEvents ();
 
+		//make camera follow one of the enemies -- diabled
+		/*if(UC->enemies)
+			camera.setFollow(1, UC->enemies->getUnit());*/
 
-		UC->update(elapsed_seconds);
+		//player is alive
+		if(UC->players->health > 0){		
+			UC->update(elapsed_seconds);
 
-		camera.updateFollow();
+			score_seconds += elapsed_seconds;
 
+			camera.updateFollow();
 
-		SC->updateShaders(camera.getViewMat(), camera.getProjMat(), true);
-		
-		BC->update();
-		PC->update();
-
-		//do collision detection
-		CD->checkAllAll();
-
-		ES->update(elapsed_seconds);
-
-		//DRAWING
-		// wipe the drawing surface clear
-		glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glViewport (0, 0, g_gl_width, g_gl_height);
-
-		//calculate view frustum
-		camera.calculateFrustum();
-		
-		bg.draw();
-		glClear (GL_DEPTH_BUFFER_BIT);
-
-		for(int i = 0; i < 2; i++){
-			// update view matrix
-
-			mat4 view_mat = camera.getViewMat();
+			SC->updateShaders(camera.getViewMat(), camera.getProjMat(), true);
 			
-			if(i%2 == 1){
-				glFrontFace (GL_CW);
-				glDisable(GL_STENCIL_TEST);
-				glEnable(GL_DEPTH_TEST);
+			BC->update();
+			PC->update();
 
-				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-				glEnable( GL_BLEND );
+			//do collision detection
+			CD->checkAllAll();
 
-				W.update(camera.getViewMat(), camera.getProjMat());
-			    W.draw();
+			ES->update(elapsed_seconds);
 
-			   /* glDisable( GL_BLEND );
-			    glBlendFunc(GL_ONE, GL_ZERO);
+			//DRAWING
+			// wipe the drawing surface clear
+			glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			glViewport (0, 0, g_gl_width, g_gl_height);
 
-			    glEnable( GL_MULTISAMPLE );
-				glEnable(GL_ALPHA_TEST);
-				glAlphaFunc(GL_GREATER, 0);*/
+			//calculate view frustum
+			camera.calculateFrustum();
+			
+			bg.draw();
+			glClear (GL_DEPTH_BUFFER_BIT);
 
-				glFrontFace (GL_CCW);
-				//camera.inverseProjMatOnY(); //enable when  the floor is made
-			}
-			else
-			{
-			    glFrontFace (GL_CW);
-				glDisable(GL_DEPTH_TEST);			
-				//enable stencil testing
-				glEnable(GL_STENCIL_TEST);
-				glStencilFunc(GL_ALWAYS, 1, 0xFF); // Set any stencil to 1
-			    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-			    glStencilMask(0xFF); // Write to stencil buffer
-			    glDepthMask(GL_FALSE); // Don't write to depth buffer
-			    glClear(GL_STENCIL_BUFFER_BIT); // Clear stencil buffer (0 by default)
+			for(int i = 0; i < 2; i++){
+				// update view matrix
+
+				mat4 view_mat = camera.getViewMat();
 				
-			    //draw water
-			    W.update(camera.getViewMat(), camera.getProjMat());
-			    W.draw();
+				if(i%2 == 1){
+					glFrontFace (GL_CW);
+					glDisable(GL_STENCIL_TEST);
+					glEnable(GL_DEPTH_TEST);
 
-				glStencilFunc(GL_EQUAL, 1, 0xFF); // Pass test if stencil value is 1
-			    glStencilMask(0x00); // Don't write anything to stencil buffer
-			    glDepthMask(GL_TRUE); // Write to depth buffer
-				glEnable(GL_DEPTH_TEST);
-				//camera.inverseProjMatOnY(); //enable when  the floor is made
-			}
-			if(i%2 == 1)
-				SC->updateShaders(camera.getViewMat(), camera.getProjMat(), false);
-			else
-				SC->updateShaders(camera.getViewMat(), camera.getProjMat(), true);
+					glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+					glEnable( GL_BLEND );
 
-			bg.setViewMatrix(view_mat);
-			
-			Mo.draw(elapsed_seconds, camera.getViewMat());
-			
-			SC->use(UNIT_SHADER);
-			//unitBuf->bindModel();
-			//unitTex->bind();
-			UC->draw();
-			//unitBuf->drawArrays();
-			/*for(int j = 0; j < 20; j++){
+					W->update(camera.getViewMat(), camera.getProjMat());
+				    W->draw();
+
+					glFrontFace (GL_CCW);
+				}
+				else
+				{
+				    glFrontFace (GL_CW);
+					glDisable(GL_DEPTH_TEST);			
+					//enable stencil testing
+					glEnable(GL_STENCIL_TEST);
+					glStencilFunc(GL_ALWAYS, 1, 0xFF); // Set any stencil to 1
+				    glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+				    glStencilMask(0xFF); // Write to stencil buffer
+				    glDepthMask(GL_FALSE); // Don't write to depth buffer
+				    glClear(GL_STENCIL_BUFFER_BIT); // Clear stencil buffer (0 by default)
+					
+				    //draw water
+				    W->update(camera.getViewMat(), camera.getProjMat());
+				    W->draw();
+
+					glStencilFunc(GL_EQUAL, 1, 0xFF); // Pass test if stencil value is 1
+				    glStencilMask(0x00); // Don't write anything to stencil buffer
+				    glDepthMask(GL_TRUE); // Write to depth buffer
+					glEnable(GL_DEPTH_TEST);
+				}
+				if(i%2 == 1)
+					SC->updateShaders(camera.getViewMat(), camera.getProjMat(), false);
+				else
+					SC->updateShaders(camera.getViewMat(), camera.getProjMat(), true);
+
+				bg.setViewMatrix(view_mat);
+				
+				Mo->draw(elapsed_seconds, camera.getViewMat());
+				
+				SC->use(UNIT_SHADER);
 				UC->draw();
-				Units[j].draw();
-				unitTex.bind();
-				unitBuf->drawArrays();
-			}*/
-			
-			SC->use(SPRITE_SHADER);
-			glFrontFace (GL_CCW);
-			SC->getShader(SPRITE_SHADER).bindLocationFloat(1.0f, 4);
-			if(i%2 == 1){
-				BC->draw(camera);
-				PC->draw(camera);
+				
+				SC->use(SPRITE_SHADER);
+				glFrontFace (GL_CCW);
+				SC->getShader(SPRITE_SHADER).bindLocationFloat(1.0f, 4);
+				if(i%2 == 1){
+					BC->draw(camera);
+					PC->draw(camera);
+				}
+
+				SC->use(UNIT_SHADER);
 			}
 
-			SC->use(UNIT_SHADER);
-			if (GLFW_PRESS == glfwGetKey (g_window, GLFW_KEY_ESCAPE)) {
-				glfwSetWindowShouldClose (g_window, 1);
-			}
-
+			updateFont(std::to_string((int)score_seconds+UC->players->score), std::to_string((int)UC->last_player->health));
+			drawScoresAndLife();
+		}
+		else
+		{
+			updateDeath(std::to_string((int)score_seconds+UC->players->score));
+			drawScoresAndLife();
 		}
 
+		if (GLFW_PRESS == glfwGetKey (g_window, GLFW_KEY_ESCAPE)) {
+			glfwSetWindowShouldClose (g_window, 1);
+		}
 
-		updateFont(std::to_string((int)score_seconds+UC->players->score), std::to_string((int)UC->last_player->health));
-		drawScoresAndLife();
-		
 		// put the stuff we've been drawing onto the display
 		glfwSwapBuffers (g_window);
 		glFinish();

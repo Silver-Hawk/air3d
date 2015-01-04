@@ -266,6 +266,64 @@ void updateFont(std::string scores, std::string health){
 	glEnableVertexAttribArray (1);	
 }
 
+void updateDeath(std::string scores){
+	glGenBuffers (1, &first_string_vp_vbo);
+	glGenBuffers (1, &first_string_vt_vbo);
+
+	glGenBuffers (1, &second_string_vp_vbo);
+	glGenBuffers (1, &second_string_vt_vbo);
+
+	/* set a string of text for lower-case letters */
+	float x_pos = -0.25f;
+	float y_pos = 0.1f;
+	float pixel_scale = 70.0f;
+	std::string first_str ("You have lost! - Press Esc to exit");
+	const char* first_c = first_str.c_str();
+	text_to_vbo (
+		first_c,
+		x_pos,
+		y_pos,
+		pixel_scale,
+		&first_string_vp_vbo,
+		&first_string_vt_vbo,
+		&first_string_points
+	);
+	glGenVertexArrays (1, &first_string_vao);
+	glBindVertexArray (first_string_vao);
+	glBindBuffer (GL_ARRAY_BUFFER, first_string_vp_vbo);
+	glVertexAttribPointer (0, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray (0);
+	glBindBuffer (GL_ARRAY_BUFFER, first_string_vt_vbo);
+	glVertexAttribPointer (1, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray (1);
+	
+	/* second string of text for capital letters */
+	x_pos = -0.0f;
+	y_pos = -0.1f;
+	pixel_scale = 70.0f;
+	std::string second_str ("Score: ");
+	second_str += scores;
+	const char* second_c = second_str.c_str();
+	text_to_vbo (
+		second_c,
+		x_pos,
+		y_pos,
+		pixel_scale,
+		&second_string_vp_vbo,
+		&second_string_vt_vbo,
+		&second_string_points
+	);
+	glGenVertexArrays (1, &second_string_vao);
+	glBindVertexArray (second_string_vao);
+	glBindBuffer (GL_ARRAY_BUFFER, second_string_vp_vbo);
+	glVertexAttribPointer (0, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray (0);
+	glBindBuffer (GL_ARRAY_BUFFER, second_string_vt_vbo);
+	glVertexAttribPointer (1, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray (1);	
+}
+
+
 void drawScoresAndLife(){
 	glBindTexture (GL_TEXTURE_2D, tex);
 	glUseProgram (sp);

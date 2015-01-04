@@ -36,6 +36,8 @@ class mountain {
 
 	mat4 mountain_mat, view;
 
+	mountain(){}
+
 	mountain(int x, int y) : x(x), y(y) {
 		triangleCount = x * y * 2 * 3;
 		map = (float*) malloc(sizeof(float) * x * y);
@@ -54,7 +56,7 @@ class mountain {
 				else
 				map[i + (j*x)] = 0.0f;
 
-		BoxFilterHeightMap(x,y,map,true);
+		//BoxFilterHeightMap(x,y,map,true);
 
 		//generate coordinate data
 		glm::vec3* vertData = (glm::vec3*) malloc(sizeof(glm::vec3) * x * y);

@@ -51,7 +51,10 @@ public:
 					p->health -= b->getDmg();
 					b =	BC->destroyBullet(b);
 				}
-				b = b->next;
+				else
+				{
+					b = b->next;
+				}
 			}
 			p = p->next;
 		}

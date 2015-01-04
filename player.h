@@ -22,8 +22,12 @@ public:
 		wc->setBehavior(WEAPON_RIFLE);
 		wc->setController(PLAYER_CONTROLLED);
 
-		wc->shots = 40;
-		wc->splits = 10; //amount of bullets when fire is run
+		//either start with shotgun or rifle
+		int weapon = round(static_cast <float> (rand()) / (static_cast <float> (RAND_MAX))); 
+		wc->setBehavior(weapon);
+
+		wc->shots = 5;
+		wc->splits = 1; //amount of bullets when fire is run
 		wc->spread = 15; //spread angle
 
 		health = 100.0f;
@@ -33,6 +37,18 @@ public:
 		prev = next = NULL;
 
 		self = new unit(0.0f, 0.0f, 0.0f);
+	}
+
+	//randomly add weapons upgrades
+	void upgradeWeapon(){
+		if(2 * static_cast <float> (rand()) / (static_cast <float> (RAND_MAX)) < 1)
+			wc->shots += 1;
+		
+		if(10 * static_cast <float> (rand()) / (static_cast <float> (RAND_MAX)) <1)
+			wc->splits += 1;
+
+		if(5 * static_cast <float> (rand()) / (static_cast <float> (RAND_MAX)) <1)
+			wc->spread += 1;
 	}
 
 	void update(float delta) {

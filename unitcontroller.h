@@ -110,6 +110,7 @@ public:
 				
 				//we know that this is the one and only player 
 				players->score += 10;
+				players->upgradeWeapon();
 			}
 			else
 			{

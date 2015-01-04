@@ -16,6 +16,8 @@ public:
 
 	int back_view_location;
 
+    background() {};
+
 	background(const char* vs, const char* fs) {
 		background_shader = create_programme_from_files (
 			vs, fs
