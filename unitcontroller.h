@@ -106,6 +106,10 @@ public:
 						enemies = NULL;
 				}
 				e = e->destroy();
+
+				
+				//we know that this is the one and only player 
+				players->score += 10;
 			}
 			else
 			{

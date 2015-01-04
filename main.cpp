@@ -8,6 +8,11 @@
 #include "stb_image.h" //Sean image loader from 09
 #include <stdio.h>
 #include <stdlib.h>
+#include <string>
+#include <sstream>
+#include <string>
+#include <iostream>
+
 #include <assert.h>
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -15,6 +20,7 @@
 #define VERTEX_SHADER_FILE "test_vs.glsl"
 #define FRAGMENT_SHADER_FILE "test_fs.glsl"
 #define MESH_FILE "test1.obj"
+#define MESH_FILE2 "mergedjet3.obj"
 
 //Game classes
 #include "helpers.h"
@@ -64,11 +70,15 @@ enemyspawner *ES;
 #include "angular.h"
 #include "bullet.h"
 #include "water.h"
+#include "font.h"
 
 // keep track of window size for things like the viewport and the mouse cursor
 int g_gl_width = 800;
 int g_gl_height = 600;
 GLFWwindow* g_window = NULL;
+
+//scores
+float score_seconds = 0;
 
 int main () {
 	assert (restart_gl_log ());
@@ -121,7 +131,7 @@ int main () {
 	mountain Mo = mountain(128,128);
 
 	UC->addPlayer(new player(GLFW_KEY_LEFT, GLFW_KEY_RIGHT, GLFW_KEY_UP, GLFW_KEY_SPACE));
-	UC->last_player->getUnit()->setBuffers(unitBuf);
+	UC->last_player->getUnit()->setBuffers(unitBuf2);
 	UC->last_player->getUnit()->setTex(unitTex);
 	
 
@@ -143,11 +153,16 @@ int main () {
 	//camera.setFollow(1, UC->getEnemyUnit(0));
 
 
+	//load data enabling font print
+	loadFontData();
+
 	while (!glfwWindowShouldClose (g_window)) {
 		static double previous_seconds = glfwGetTime ();
 		double current_seconds = glfwGetTime ();
 		double elapsed_seconds = current_seconds - previous_seconds;
 		previous_seconds = current_seconds;
+
+		score_seconds += elapsed_seconds;
 
 		_update_fps_counter (g_window);
 		
@@ -265,6 +280,10 @@ int main () {
 			}
 
 		}
+
+
+		updateFont(std::to_string((int)score_seconds+UC->players->score), std::to_string((int)UC->last_player->health));
+		drawScoresAndLife();
 		
 		// put the stuff we've been drawing onto the display
 		glfwSwapBuffers (g_window);

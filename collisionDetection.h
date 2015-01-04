@@ -47,7 +47,10 @@ public:
 					continue;
 				}
 
-				checkCollision(b, p->getUnit());
+				if(checkCollision(b, p->getUnit())){
+					p->health -= b->getDmg();
+					b =	BC->destroyBullet(b);
+				}
 				b = b->next;
 			}
 			p = p->next;

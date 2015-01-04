@@ -1,6 +1,6 @@
 BIN = air3d
 CC = g++
-FLAGS = -Wall -Wno-long-long -Wno-unused-but-set-variable -pedantic -g
+FLAGS = -Wall -Wno-long-long -Wno-unused-but-set-variable -pedantic -g -std=c++0x
 INC = -I ./common/include
 LOC_LIB = ./common/linux_x86_64/libGLEW.a ./common/linux_x86_64/libglfw3.a ./common/linux_x86_64/libassimp.a ./libfreeimageplus.a
 SYS_LIB = -lGL -lX11 -lXxf86vm -lXrandr -lpthread -lXi -lz

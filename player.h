@@ -13,7 +13,9 @@ public:
 	player* prev;
 	player* next;
 
-	
+	float health;
+
+	int score;
 
 	player(int left, int right, int up, int shoot) : left(left), right(right), up(up), shoot(shoot)  {
 		wc = new weaponcontroller();
@@ -24,6 +26,9 @@ public:
 		wc->splits = 10; //amount of bullets when fire is run
 		wc->spread = 15; //spread angle
 
+		health = 100.0f;
+
+		score = 0;
 
 		prev = next = NULL;
 
